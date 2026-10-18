@@ -1,22 +1,27 @@
 # cruscotto
 
 A quiet instrument strip above the Claude Code prompt, in the spirit of a
-nineties night-lit dashboard: four thin bars, one check-engine lamp, and
+nineties night-lit dashboard: three thin bars, one check-engine lamp, and
 three buttons for the prompts you send most often.
 
-![The strip in the VS Code extension: model, total tokens, the four gauges and the three buttons](docs/band.png)
+![The strip: check-engine lamp, range sentence, total tokens, the three gauges](docs/skin-night.svg)
 
 ## What it shows
 
 | Gauge | Reading |
 |---|---|
 | Context | How full the context window is, with a tick at the auto-compaction threshold |
-| Range | Whether the 5-hour window lasts to its reset at the current pace, and how much would be to spare; or when it runs out before that, amber only if 30 minutes or more before the reset. Reaching the reset with little to spare is the ideal, not a warning |
 | Session 5 h | Share of the 5-hour rate-limit window left, and when it resets |
 | Weekly | Share of the 7-day window left, and when it resets; any other window the API reports gets its own bar |
 
-The header carries the check-engine lamp and the total tokens counted, in
-millions, kept across sessions. The total sums input, output, cache-read
+The header carries the check-engine lamp, the range sentence and the total
+tokens counted, in millions, kept across sessions.
+
+The range sentence is a verdict, so it has no bar: at the pace of the last
+90 minutes, does the 5-hour window last to its reset? "lasts to the reset,
+12% to spare" means yes, and little to spare is the ideal, not a warning.
+"runs out in 1 h 20 min, before the reset" means no: amber if that is 30
+minutes or more before the reset, red if it is within 30 minutes from now. The total sums input, output, cache-read
 and cache-write tokens of every turn.
 
 The lamp stays a dim outline while everything is fine. It turns amber when

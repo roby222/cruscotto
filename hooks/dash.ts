@@ -229,22 +229,16 @@ export const buildSvg = (snap: Snap, now: number): string => {
 
   // Griglia 2 x 2: contesto e autonomia sopra, i limiti a due a due sotto.
   const r = range(snap, now)
-  const rangeCell: Row = r.status === 'measuring'
-    ? { name: 'Range', frac: null, tone: 'ok', value: 'measuring, needs 5 min of use' }
-    : r.status === 'lasts'
-      ? { name: 'Range', frac: 1, tone: 'ok', value: `lasts to the reset, ${r.spare}% to spare at this pace` }
-      : {
-          name: 'Range',
-          frac: r.msToReset ? clamp(r.msToEmpty / r.msToReset, 0, 1) : null,
-          tone: rangeTone(r),
-          value: `runs out in ${spanText(r.msToEmpty)}`,
-        }
+  // Range is a verdict, not a quantity: one sentence in the header, no bar.
+  const rangeText = r.status === 'measuring' ? ''
+    : r.status === 'lasts' ? `lasts to the reset, ${r.spare}% to spare at this pace`
+    : `runs out in ${spanText(r.msToEmpty)}, before the reset`
+  const rangeColor = r.status === 'runsOut' && rangeTone(r) !== 'ok' ? toneColor(rangeTone(r)) : skin().muted
   const cells: Row[] = [
     {
       name: 'Context', frac: ctxFrac, tone: ctxTone, marker: compactAt,
       value: ctx != null ? `${Math.round(ctx)}%, ${compactTokens(snap.ctxTokens ?? 0)} of ${compactTokens(snap.ctxWindow ?? 0)}` : 'no data',
     },
-    rangeCell,
   ]
   const limits: Row[] = snap.limits.map((l): Row => {
     const left = leftOf(l)
@@ -268,10 +262,13 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const H = 32 + lines * ROW
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`
 
-  // Intestazione: spia e nota a sinistra; consumo a destra. Il modello lo mostra già il compositore.
+  // Intestazione: spia, frase del range e note a sinistra; consumo a destra. Il modello lo mostra già il compositore.
   s += engineLamp(L, 5, tone)
   const shown = fitReasons(notes, 44)
-  if (shown) s += text(L + 32, 20, shown, 12, toneColor(tone))
+  s += `<text x="${L + 32}" y="20" font-family="${FONT}" font-size="12" style="font-variant-numeric:tabular-nums">`
+  if (rangeText) s += `<tspan fill="${rangeColor}">${esc(rangeText)}</tspan>`
+  if (shown) s += `<tspan dx="${rangeText ? 12 : 0}" fill="${toneColor(tone)}">${esc(shown)}</tspan>`
+  s += `</text>`
   s += text(R, 20, `${millions(snap.total)} M tokens`, 16, skin().ok, 'end', 600)
 
   const cell = (r: Row, x: number, y: number, w: number) => {

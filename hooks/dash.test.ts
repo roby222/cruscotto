@@ -44,7 +44,7 @@ describe('dash helpers', () => {
     expect(svg.startsWith('<svg')).toBe(true)
     expect(svg.includes('Opus 5.5')).toBe(false) // the composer already names the model
     expect(svg.includes('Session 5 h')).toBe(true)
-    expect(svg.includes('Range')).toBe(true)
+    expect(svg.includes('Range')).toBe(false) // range is a sentence in the header, not a gauge
     expect(svg.includes('Weekly Fable')).toBe(true)
   })
 
@@ -80,6 +80,7 @@ describe('dash helpers', () => {
     burn = pushReading([], { t: now - h, pct: 65 })
     burn = pushReading(burn, { t: now, pct: 70 })
     expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'lasts', spare: 20 })
+    expect(buildSvg({ ...INITIAL, limits, burn }, now).includes('20% to spare')).toBe(true)
     expect(lamp({ ...INITIAL, limits, burn }, now).tone).toBe('ok') // reaching the reset is fine, whatever is left
     // Dopo un reset la quota scende: nessuna proiezione, avanza quel che resta.
     burn = pushReading([], { t: now - h, pct: 80 })
