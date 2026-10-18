@@ -14,7 +14,7 @@ const snap = {
   ],
   burn: [{ t: now - h, pct: 44 }, { t: now, pct: 56 }],
   // a few lamps lit, to show them: cold cache, two tools and one agent running
-  cacheHit: 0.3, toolsRunning: 2, agentsRunning: 1,
+  cacheHit: 0.3, toolsRunning: 2, agents: ['a1'],
 }
 const BG: Record<string, string> = { night: '#1b1c1e', amber: '#1a1408', paper: '#f4f2ec', mono: '#1b1c1e' }
 for (const skin of Object.keys(SKINS)) {

@@ -22,9 +22,9 @@ export type Snap = {
   cacheHit: number | null
   lastSeconds: number | null
   lastTools: number
-  /** Tool calls and subagents running right now, for the lamps. */
+  /** Tool calls of the main loop running right now, and the ids of the subagents mid-turn, for the lamps. */
   toolsRunning: number
-  agentsRunning: number
+  agents: string[]
   hasError: boolean
   isHidden: boolean
 }

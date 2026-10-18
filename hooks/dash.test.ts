@@ -121,7 +121,7 @@ describe('dash helpers', () => {
     const now = 10 * 3_600_000
     const quiet = { ...INITIAL, cacheHit: 0.9, usd: 2 }
     expect(lampWords(lamps(quiet, now))).toEqual([])
-    const busy = { ...quiet, hasError: true, toolsRunning: 3, agentsRunning: 1, cacheHit: 0.2, usd: 12 }
+    const busy = { ...quiet, hasError: true, toolsRunning: 3, agents: ['a1'], cacheHit: 0.2, usd: 12 }
     expect(lampWords(lamps(busy, now))).toEqual(['FAILED', 'COST', 'COLD', 'TOOLS 3', 'AGENTS 1'])
     expect(lamps(busy, now).find(l => l.key === 'tools')?.count).toBe(3)
     // cost lamp off at 0; cold threshold follows the setting

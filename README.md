@@ -87,7 +87,7 @@ plugin's options live; the same screen appears once at install.
 
 | Option | Default | What it does |
 |---|---|---|
-| Skin | night | The whole palette: night for dark themes, amber for a one-color nineties cluster, paper for light themes, mono for grey |
+| Skin | night | The whole palette: night for dark themes, amber for a one-color nineties cluster (attention in warm white, errors in saturated red, so they stand apart from the amber), paper for light themes, mono for grey |
 | Amber threshold | 20 | A bar turns amber at this share left or less |
 | Red threshold | 5 | The same for red |
 | Lamps | on | Show the lamp row |

@@ -13,8 +13,17 @@ export const register: Register = (on, options) => {
 
   on('session.start', async ($, e, next) => {
     const stored = Number((await $.store.get('totalTokens')) ?? 0)
-    await update($, snapAtom, (s: Snap) => ({ ...s, total: Number.isFinite(stored) ? stored : 0 }))
+    await update($, snapAtom, (s: Snap) => ({ ...s, total: Number.isFinite(stored) ? stored : 0, toolsRunning: 0, agents: [] }))
     await $.command.register({ name: 'cruscotto', description: 'Raw cruscotto readings, to compare with the Usage panel' })
+    // "resets in", the range and the turbo lamp move with the clock, not with a state write.
+    $.clock.every(15_000, () => $.ui.invalidate('ui.render'))
+
+    return next(e)
+  })
+
+  on('turn.start', async ($, e, next) => {
+    const id = e.agentId
+    if (id) await update($, snapAtom, (s: Snap) => ({ ...s, agents: s.agents.includes(id) ? s.agents : [...s.agents, id] }))
 
     return next(e)
   })
@@ -33,6 +42,8 @@ export const register: Register = (on, options) => {
   })
 
   on('tool.call', async ($, e, next) => {
+    // A subagent's tools raise their own tool.call; the AGENTS lamp covers those.
+    if (e.agentId) return next(e)
     tools += 1
     await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: s.toolsRunning + 1 }))
     try {
@@ -62,6 +73,19 @@ export const register: Register = (on, options) => {
   on('turn.complete', async ($, e, next) => {
     const now = await $.clock.now()
     const used = e.usage ? tokensOf(e.usage) : 0
+
+    // A subagent's turn: it leaves the AGENTS lamp and its tokens count, nothing else is the person's turn.
+    if (e.agentId) {
+      const id = e.agentId
+      let total = 0
+      await update($, snapAtom, (s: Snap) => {
+        total = s.total + used
+        return { ...s, total, trip: s.trip + used, samples: used > 0 ? pushSample(s.samples, { t: now, tokens: used }) : s.samples, agents: s.agents.filter(a => a !== id) }
+      })
+      if (used > 0) await $.store.set('totalTokens', total)
+
+      return next(e)
+    }
     const input = e.usage
       ? e.usage.input_tokens + e.usage.cache_read_input_tokens + e.usage.cache_creation_input_tokens
       : 0
@@ -92,7 +116,7 @@ export const register: Register = (on, options) => {
         cacheHit: e.usage && input > 0 ? e.usage.cache_read_input_tokens / input : s.cacheHit,
         lastSeconds: Math.round(e.durationMs / 1000),
         lastTools: tools,
-        hasError: e.reason === 'error',
+        hasError: e.reason === 'error' || e.reason === 'refusal',
         compactPct: compactPct ?? s.compactPct,
       }
     })

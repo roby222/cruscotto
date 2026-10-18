@@ -19,7 +19,7 @@ export const INITIAL: Snap = {
   lastSeconds: null,
   lastTools: 0,
   toolsRunning: 0,
-  agentsRunning: 0,
+  agents: [],
   hasError: false,
   isHidden: false,
 }
@@ -28,12 +28,12 @@ export const INITIAL: Snap = {
 const AMBER = '#d9a441'
 const RED = '#d96b5a'
 
-type Skin = { text: string; muted: string; track: string; lampOff: string; ok: string; warn?: string }
+type Skin = { text: string; muted: string; track: string; lampOff: string; ok: string; warn?: string; bad?: string }
 /** The skins: night (the default, for dark themes), amber (one-color nineties cluster), paper (for light themes), mono. */
 export const SKINS: Record<string, Skin> = {
   night: { text: '#e6e4df', muted: '#8f8e8a', track: '#34363a', lampOff: '#3a3b40', ok: '#86b3a4' },
-  // amber's healthy color is amber itself, so its warning is orange.
-  amber: { text: '#f0b84a', muted: '#9a7a3a', track: '#3a2e14', lampOff: '#4a3c1c', ok: '#f0b84a', warn: '#ff8a2b' },
+  // amber's healthy color is amber itself, so attention is a warm white and error a saturated red: the two must stand apart from the base.
+  amber: { text: '#f0b84a', muted: '#9a7a3a', track: '#3a2e14', lampOff: '#4a3c1c', ok: '#f0b84a', warn: '#f6f3ea', bad: '#ff4538' },
   paper: { text: '#2a2a28', muted: '#7a7873', track: '#d9d6cf', lampOff: '#c4c1ba', ok: '#3f8f78' },
   mono: { text: '#e6e4df', muted: '#8f8e8a', track: '#34363a', lampOff: '#3a3b40', ok: '#bdbbb5' },
 }
@@ -44,7 +44,7 @@ const skin = (): Skin => SKINS[settings.skin] ?? SKINS.night
 const FONT = "'Segoe UI','Helvetica Neue',Arial,sans-serif"
 
 export type Tone = 'ok' | 'warn' | 'bad'
-const toneColor = (t: Tone): string => (t === 'ok' ? skin().ok : t === 'warn' ? skin().warn ?? AMBER : RED)
+const toneColor = (t: Tone): string => (t === 'ok' ? skin().ok : t === 'warn' ? skin().warn ?? AMBER : skin().bad ?? RED)
 const RANK: Record<Tone, number> = { ok: 0, warn: 1, bad: 2 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
@@ -213,7 +213,7 @@ export const lamps = (snap: Snap, now: number): Lamp[] => {
       title: `Cache hit ${cache != null ? cache + '%' : 'unknown'} on the last turn; lights amber under ${settings.coldCacheBelow}%`,
     },
     { key: 'tools', on: snap.toolsRunning > 0, tone: 'ok', count: snap.toolsRunning, word: 'TOOLS', title: `${snap.toolsRunning} tool call${snap.toolsRunning === 1 ? '' : 's'} running` },
-    { key: 'agents', on: snap.agentsRunning > 0, tone: 'ok', count: snap.agentsRunning, word: 'AGENTS', title: `${snap.agentsRunning} subagent${snap.agentsRunning === 1 ? '' : 's'} running` },
+    { key: 'agents', on: snap.agents.length > 0, tone: 'ok', count: snap.agents.length, word: 'AGENTS', title: `${snap.agents.length} subagent${snap.agents.length === 1 ? '' : 's'} running` },
     {
       key: 'turbo', on: settings.turboAt > 0 && rate >= settings.turboAt, tone: 'ok', word: 'TURBO',
       title: `${compactTokens(rate)} tokens/min over the last 5 minutes; lights at ${compactTokens(settings.turboAt)}`,
@@ -225,14 +225,20 @@ export const lamps = (snap: Snap, now: number): Lamp[] => {
 export const lampWords = (list: Lamp[]): string[] =>
   list.filter(l => l.on).map(l => (l.count != null ? `${l.word} ${l.count}` : l.word))
 
-// 14 x 14 glyphs, stroke based; COLOR is replaced when drawn. Placeholders until the designed set lands.
+// 14 x 14 glyphs, stroke based, designed with a render loop at 1x and 4x (docs/skins.ts draws them); COLOR is replaced when drawn.
 const GLYPHS: Record<LampKey, string> = {
-  failed: '<path d="M7 1.5L13 12.5H1Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 5.5V8.5" stroke="COLOR" stroke-width="1.5" stroke-linecap="round"/><circle cx="7" cy="10.5" r="0.9" fill="COLOR"/>',
-  cost: '<circle cx="7" cy="7" r="5.5" fill="none" stroke="COLOR" stroke-width="1.5"/><path d="M7 4V10" stroke="COLOR" stroke-width="1.5" stroke-linecap="round"/>',
-  cold: '<path d="M7 1.5V12.5M2.2 4.2L11.8 9.8M2.2 9.8L11.8 4.2" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round"/>',
-  tools: '<path d="M9.5 1.5A3.5 3.5 0 0 0 5.6 6.4L1.5 10.5L3.5 12.5L7.6 8.4A3.5 3.5 0 0 0 12.5 4.5L10.5 6.5L8.5 5.5L7.5 3.5Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linejoin="round"/>',
-  agents: '<circle cx="5" cy="5" r="2.5" fill="none" stroke="COLOR" stroke-width="1.5"/><circle cx="10" cy="6" r="2" fill="none" stroke="COLOR" stroke-width="1.5"/><path d="M1 12.5A4 4 0 0 1 9 12.5M9.5 12.5A3 3 0 0 1 13.5 10.5" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round"/>',
-  turbo: '<path d="M8 1L2.5 8H7L6 13L11.5 6H7Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linejoin="round"/>',
+  failed:
+    '<path d="M7 1.5 L13.25 12.5 H0.75 Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 6 V8" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="10.4" r="0.9" fill="COLOR"/>',
+  cost:
+    '<path d="M2.75 3.5 H11.25 Q12.5 3.5 12.5 4.75 V9.25 Q12.5 10.5 11.25 10.5 H2.75 Q1.5 10.5 1.5 9.25 V4.75 Q1.5 3.5 2.75 3.5 Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="7" r="1.25" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 6.5 V7.5 M10.5 6.5 V7.5" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
+  cold:
+    '<path d="M7 12.5 L7 1.5 M2.24 9.75 L11.76 4.25 M2.24 4.25 L11.76 9.75 M10.64 4.9 L10.64 3.7 M10.64 4.9 L11.68 5.5 M7 2.8 L5.96 2.2 M7 2.8 L8.04 2.2 M3.36 4.9 L2.32 5.5 M3.36 4.9 L3.36 3.7 M3.36 9.1 L3.36 10.3 M3.36 9.1 L2.32 8.5 M7 11.2 L8.04 11.8 M7 11.2 L5.96 11.8 M10.64 9.1 L11.68 8.5 M10.64 9.1 L10.64 10.3" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
+  tools:
+    '<path d="M8.32 3.84 A0.6 0.6 0 0 0 8.32 4.69 L9.31 5.68 A0.6 0.6 0 0 0 10.16 5.68 L12.24 3.6 A3.4 3.4 0 0 1 7.8 8.04 L3.66 12.18 A1.3 1.3 0 0 1 1.82 10.34 L5.96 6.2 A3.4 3.4 0 0 1 10.4 1.76 Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
+  agents:
+    '<circle cx="5" cy="3.75" r="2" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.25 12.5 V12 A3.75 3.75 0 0 1 8.75 12 V12.5" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.75 1.75 A2 2 0 0 1 9.75 5.75" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.75 12.5 V12 A3.75 3.75 0 0 0 9.97 8.38" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
+  turbo:
+    '<path d="M9.5 1.25 L2 8.5 H6.25 L4.5 12.75 L12 5.5 H7.75 Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
 }
 
 /** Header blocks share one grammar: the value on the top line, a small caps label under it. */
@@ -357,7 +363,7 @@ export const buildReport = (snap: Snap, now: number): string => {
     `rate: ${Math.round(ratePerMin(snap.samples, now))} tokens/min over the last 5 minutes`,
     `cost: ${snap.usd != null ? '$' + snap.usd.toFixed(4) : '--'}, cache ${snap.cacheHit != null ? Math.round(snap.cacheHit * 100) + '%' : '--'}`,
     `last turn: ${snap.lastSeconds ?? '--'} s, ${snap.lastTools} tools${snap.hasError ? ', ended in error' : ''}`,
-    `lamps: ${lampWords(lamps(snap, now)).join(', ') || 'none lit'}; running now ${snap.toolsRunning} tools, ${snap.agentsRunning} agents`,
+    `lamps: ${lampWords(lamps(snap, now)).join(', ') || 'none lit'}; running now ${snap.toolsRunning} tools, ${snap.agents.length} agents`,
   ]
   if (snap.limits.length === 0) lines.push('rate-limit windows: none reported (off a subscription, or no response yet)')
   return lines.join('\n')

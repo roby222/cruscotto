@@ -13,6 +13,7 @@ const world = (on: On, saved: unknown[] = []) => {
   })
   on('session.measure', (_$, e) => ({ changed: e.changed }))
   on('command.register', () => ({}))
+  on('turn.start', (_$, e) => ({ turnId: e.turnId }))
   on('turn.complete', (_$, e) => ({ text: e.answer }))
   on('session.usage', () => ({
     value: { startedAt: 0, context: { window: 200000, tokens: 50000, percent: 25 }, rateLimits: [] },
@@ -75,4 +76,23 @@ test('il terminale riceve una riga di testo', async ($, on) => {
 
   const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
   expect(await ui.find({ type: 'Text', text: /tok\/min/ })).toBeDefined()
+})
+
+test('un subagente accende AGENTS e non tocca il turno della persona', async ($, on) => {
+  const saved: unknown[] = []
+  world(on, saved)
+
+  await $.turn.start({ turnId: 'a-1', agentId: 'agent-1' } as never)
+  let ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
+  expect(await ui.find({ type: 'Text', text: /AGENTS 1/ })).toBeDefined()
+
+  await $.turn.complete({
+    answer: 'done', durationMs: 900, isAborted: false, turnId: 'a-1', agentId: 'agent-1', reason: 'error',
+    usage: { model: 'claude-haiku-5-5', input_tokens: 10, output_tokens: 20, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 },
+  } as never)
+  ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
+  const line = String(((await ui.find({ type: 'Text', text: /tok\/min/ })) as { props: { children: unknown } }).props.children)
+  expect(line.includes('AGENTS')).toBe(false)
+  expect(line.includes('FAILED')).toBe(false) // the subagent's error is not the person's turn failing
+  expect(saved).toEqual([30]) // but its tokens count
 })
