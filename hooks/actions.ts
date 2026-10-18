@@ -1,11 +1,11 @@
 /** The three risolvi101 quick commands, sent as the user's own prompt. */
-export type Action = { key: string; label: string; glyph?: string; hotkey: string; text: string }
+export type Action = { key: string; label: string; hotkey: string; text: string }
 
 export const ACTIONS: Action[] = [
   {
     key: 'risolvi',
-    label: 'Autopilot',
-    hotkey: 'p',
+    label: 'Your call, go ahead',
+    hotkey: 'y',
     text: 'Solve it, go ahead on your own, find a solution and tell me how you solved it',
   },
   {
@@ -27,9 +27,8 @@ export const ACTIONS: Action[] = [
   },
   {
     key: 'muoviti',
-    label: 'Flash headlights',
-    glyph: '≡D',
-    hotkey: 's',
+    label: 'Hurry up',
+    hotkey: 'h',
     text: 'Speed up and parallelize where you can. Tell me why this is taking so long and how much time is left.',
   },
 ]

@@ -29,13 +29,13 @@ the last turn failed. The reason is written next to it.
 
 Each one submits a prompt as your own words:
 
-- **Autopilot**: solve it, go ahead on your own, and explain how.
+- **Your call, go ahead**: solve it, go ahead on your own, and explain how.
 - **Commit and push**: stage everything, commit in the style of the last
   commits, push the current branch; no force push, no rebase.
-- **≡D** (flash the headlights): speed up, parallelize, say why it is slow
+- **Hurry up**: speed up, parallelize, say why it is slow
   and how long is left.
 
-With the strip focused, the hotkeys are `p`, `c` and `s`. The texts live in
+With the strip focused, the hotkeys are `y`, `c` and `h`. The texts live in
 `hooks/actions.ts`.
 
 ## Install

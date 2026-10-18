@@ -110,7 +110,7 @@ export const register: Register = on => {
     const buttons = ACTIONS.map(a => (
       <Button
         key={a.key}
-        label={a.glyph ?? a.label}
+        label={a.label}
         hotkey={a.hotkey}
         variant="secondary"
         dimColor
