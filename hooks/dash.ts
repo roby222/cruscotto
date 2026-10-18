@@ -122,6 +122,14 @@ export const range = (snap: Snap, now: number): Range => {
   return { status: 'runsOut', msToEmpty, msToReset }
 }
 
+export const SOON_MS = 30 * 60 * 1000
+
+/** The Range color, shared by its bar and the lamp: red if empty within 30 min, amber if empty more than 30 min before the reset, else by the margin. */
+export const rangeTone = (r: Range): Tone =>
+  r.status === 'runsOut'
+    ? r.msToEmpty < SOON_MS ? 'bad' : r.msToReset != null && r.msToReset - r.msToEmpty > SOON_MS ? 'warn' : 'ok'
+    : r.status === 'lasts' ? leftTone(r.spare) : 'ok'
+
 const spanText = (ms: number): string => untilReset(new Date(ms).toISOString(), 0)
 
 /** Soglie sulla quota rimasta: ambra al 20%, rossa al 5%. */
@@ -159,13 +167,12 @@ export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[]; 
     else if (left <= settings.warnAt) issues.push({ tone: 'warn', text: `${name} limit running low` })
   }
   const r = range(snap, now)
-  if (r.status === 'runsOut') {
-    issues.push(r.msToEmpty < 30 * 60 * 1000
-      ? { tone: 'bad', text: 'session 5 h runs out within 30 min' }
-      : { tone: 'warn', text: 'session 5 h runs out before reset' })
+  const rt = rangeTone(r)
+  if (rt !== 'ok') {
+    issues.push({ tone: rt, text: r.status === 'runsOut'
+      ? (rt === 'bad' ? 'session 5 h runs out within 30 min' : 'session 5 h runs out well before reset')
+      : 'session 5 h tight at the reset' })
   }
-  // The Range bar colors by its margin; the lamp agrees with it.
-  if (r.status === 'lasts' && leftTone(r.spare) !== 'ok') issues.push({ tone: leftTone(r.spare), text: 'session 5 h tight at the reset' })
   if (snap.hasError) issues.push({ tone: 'bad', text: 'last turn failed', onBar: false })
 
   issues.sort((a, b) => RANK[b.tone] - RANK[a.tone])
@@ -229,11 +236,11 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const rangeCell: Row = r.status === 'measuring'
     ? { name: 'Range', frac: null, tone: 'ok', value: 'measuring, needs 5 min of use' }
     : r.status === 'lasts'
-      ? { name: 'Range', frac: r.spare / 100, tone: leftTone(r.spare), value: `at this pace, ${r.spare}% left at the reset` }
+      ? { name: 'Range', frac: r.spare / 100, tone: rangeTone(r), value: `at this pace, ${r.spare}% left at the reset` }
       : {
           name: 'Range',
           frac: r.msToReset ? clamp(r.msToEmpty / r.msToReset, 0, 1) : null,
-          tone: r.msToEmpty < 30 * 60 * 1000 ? 'bad' : 'warn',
+          tone: rangeTone(r),
           value: `runs out in ${spanText(r.msToEmpty)}`,
         }
   const cells: Row[] = [

@@ -11,7 +11,7 @@ three buttons for the prompts you send most often.
 | Gauge | Reading |
 |---|---|
 | Context | How full the context window is, with a tick at the auto-compaction threshold |
-| Range | At the current pace, how much of the 5-hour window is still left when it resets, or when it runs out before that |
+| Range | At the current pace, how much of the 5-hour window is still left when it resets, or when it runs out before that; amber only if more than 30 minutes before the reset |
 | Session 5 h | Share of the 5-hour rate-limit window left, and when it resets |
 | Weekly | Share of the 7-day window left, and when it resets; any other window the API reports gets its own bar |
 
@@ -23,7 +23,8 @@ The lamp stays a dim outline while everything is fine. It turns amber when
 a window drops to 20% left or the context is within 20 points of
 compaction, and red at 5% left, within 5 points of compaction, when a window
 is used up, when the 5-hour window would run out within 30 minutes, or when
-the last turn failed. The gauges say which; only what no gauge shows, a
+the last turn failed. Running out less than 30 minutes before the reset is
+no warning: the reset is as good as a refill. The gauges say which; only what no gauge shows, a
 failed turn, is written next to the lamp.
 
 `/cruscotto` prints the raw readings, to compare with the Usage panel.
