@@ -26,11 +26,12 @@ export const INITIAL: Snap = {
 const AMBER = '#d9a441'
 const RED = '#d96b5a'
 
-type Skin = { text: string; muted: string; track: string; lampOff: string; ok: string }
+type Skin = { text: string; muted: string; track: string; lampOff: string; ok: string; warn?: string }
 /** The skins: night (the default, for dark themes), amber (one-color nineties cluster), paper (for light themes), mono. */
 export const SKINS: Record<string, Skin> = {
   night: { text: '#e6e4df', muted: '#8f8e8a', track: '#34363a', lampOff: '#3a3b40', ok: '#86b3a4' },
-  amber: { text: '#f0b84a', muted: '#9a7a3a', track: '#3a2e14', lampOff: '#4a3c1c', ok: '#f0b84a' },
+  // amber's healthy color is amber itself, so its warning is orange.
+  amber: { text: '#f0b84a', muted: '#9a7a3a', track: '#3a2e14', lampOff: '#4a3c1c', ok: '#f0b84a', warn: '#ff8a2b' },
   paper: { text: '#2a2a28', muted: '#7a7873', track: '#d9d6cf', lampOff: '#c4c1ba', ok: '#3f8f78' },
   mono: { text: '#e6e4df', muted: '#8f8e8a', track: '#34363a', lampOff: '#3a3b40', ok: '#bdbbb5' },
 }
@@ -41,7 +42,7 @@ const skin = (): Skin => SKINS[settings.skin] ?? SKINS.night
 const FONT = "'Segoe UI','Helvetica Neue',Arial,sans-serif"
 
 export type Tone = 'ok' | 'warn' | 'bad'
-const toneColor = (t: Tone): string => (t === 'ok' ? skin().ok : t === 'warn' ? AMBER : RED)
+const toneColor = (t: Tone): string => (t === 'ok' ? skin().ok : t === 'warn' ? skin().warn ?? AMBER : RED)
 const RANK: Record<Tone, number> = { ok: 0, warn: 1, bad: 2 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
@@ -163,6 +164,8 @@ export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[]; 
       ? { tone: 'bad', text: 'session 5 h runs out within 30 min' }
       : { tone: 'warn', text: 'session 5 h runs out before reset' })
   }
+  // The Range bar colors by its margin; the lamp agrees with it.
+  if (r.status === 'lasts' && leftTone(r.spare) !== 'ok') issues.push({ tone: leftTone(r.spare), text: 'session 5 h tight at the reset' })
   if (snap.hasError) issues.push({ tone: 'bad', text: 'last turn failed', onBar: false })
 
   issues.sort((a, b) => RANK[b.tone] - RANK[a.tone])
@@ -188,10 +191,10 @@ const bar = (x: number, y: number, w: number, frac: number | null, tone: Tone, m
 }
 
 // Sagoma del motore come la spia di avaria ISO: blocco, presa d'aria, scarico, piede; 24 × 18.
-// ISO check-engine silhouette, 24 x 18: cylinder head on top, pulley stub left, exhaust right, sump below.
+// ISO check-engine silhouette, 26 x 17: tab top-left, exhaust right, shaft left, sump below, hollow middle.
 const ENGINE =
-  'M7 2H14V5H17V8H21V14H17V16H11V14H5V11H2V8H5V5H7Z' +
-  'M9.5 10.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0Z' // bore
+  'M8 2H12V4H22V7H26V11H22V15H16V17H9V15H6V12H2V8H6V4H8Z' +
+  'M9 7H19V12H9Z'
 
 const engineLamp = (x: number, y: number, tone: Tone): string =>
   tone === 'ok'

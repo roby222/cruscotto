@@ -73,6 +73,19 @@ plugin's options live; the same screen appears once at install.
 
 A change there reloads the strip with the new values.
 
+### Skins
+
+| night | amber |
+|---|---|
+| ![night](docs/skin-night.svg) | ![amber](docs/skin-amber.svg) |
+
+| paper | mono |
+|---|---|
+| ![paper](docs/skin-paper.svg) | ![mono](docs/skin-mono.svg) |
+
+The samples are drawn by the plugin's own code (`docs/skins.ts`), so they
+match what the strip shows.
+
 ## Install
 
 At the prompt of a terminal session:

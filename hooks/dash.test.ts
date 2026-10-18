@@ -76,6 +76,7 @@ describe('dash helpers', () => {
     burn = pushReading([], { t: now - h, pct: 65 })
     burn = pushReading(burn, { t: now, pct: 70 })
     expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'lasts', spare: 20 })
+    expect(lamp({ ...INITIAL, limits, burn }, now).tone).toBe('warn')
     // Dopo un reset la quota scende: nessuna proiezione, avanza quel che resta.
     burn = pushReading([], { t: now - h, pct: 80 })
     burn = pushReading(burn, { t: now, pct: 10 })
