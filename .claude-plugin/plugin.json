@@ -11,16 +11,16 @@
   "license": "MIT",
   "types": "./types/index.d.ts",
   "userConfig": {
-    "accent": {
+    "skin": {
       "type": "string",
-      "title": "Accent color",
-      "description": "Color of the healthy bars and the token counter.",
-      "default": "green",
+      "title": "Skin",
+      "description": "The look of the strip: night (dark themes), amber (one-color nineties cluster), paper (light themes) or mono.",
+      "default": "night",
       "options": [
-        "green",
+        "night",
         "amber",
-        "cyan",
-        "white"
+        "paper",
+        "mono"
       ]
     },
     "warnAt": {

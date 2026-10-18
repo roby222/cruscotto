@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { INITIAL, buildSvg, fitReasons, lamp, leftTone, limitLabel, millions, pushReading, range, pushSample, ratePerMin, rateMax, settings, shortModel, tokensOf, untilReset } from './dash'
+import { INITIAL, buildSvg, fitReasons, lamp, leftTone, limitLabel, millions, pushReading, range, pushSample, ratePerMin, rateMax, SKINS, settings, shortModel, tokensOf, untilReset } from './dash'
 
 describe('dash helpers', () => {
   test('tokensOf somma i quattro conteggi', () => {
@@ -99,5 +99,15 @@ describe('dash helpers', () => {
     expect(leftTone(8)).toBe('bad')
     expect(leftTone(60)).toBe('ok')
     Object.assign(settings, { warnAt: 20, badAt: 5 })
+  })
+
+  test('la skin cambia i colori del quadro', () => {
+    const night = buildSvg(INITIAL, 0)
+    settings.skin = 'amber'
+    const amber = buildSvg(INITIAL, 0)
+    settings.skin = 'night'
+    expect(night.includes(SKINS.night.text)).toBe(true)
+    expect(amber.includes(SKINS.amber.text)).toBe(true)
+    expect(amber.includes(SKINS.night.text)).toBe(false)
   })
 })

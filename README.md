@@ -47,7 +47,7 @@ plugin's options live; the same screen appears once at install.
 
 | Option | Default | What it does |
 |---|---|---|
-| Accent color | green | Color of the healthy bars and the token counter: green, amber, cyan or white |
+| Skin | night | The whole palette: night for dark themes, amber for a one-color nineties cluster, paper for light themes, mono for grey |
 | Amber threshold | 20 | A bar turns amber, and the lamp with it, at this share left or less |
 | Red threshold | 5 | The same for red |
 | Prompt buttons | on | Show the three prompt buttons |

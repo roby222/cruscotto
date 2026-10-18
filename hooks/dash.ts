@@ -23,21 +23,25 @@ export const INITIAL: Snap = {
 }
 
 // Quadro notturno: traccia scura, riempimento avorio, ambra e rosso solo oltre soglia.
-const TEXT = '#e6e4df'
-const MUTED = '#8f8e8a'
-const TRACK = '#34363a'
-const LAMP_OFF = '#3a3b40'
 const AMBER = '#d9a441'
 const RED = '#d96b5a'
-const ACCENTS: Record<string, string> = { green: '#86b3a4', amber: AMBER, cyan: '#7fb8c9', white: '#e6e4df' }
+
+type Skin = { text: string; muted: string; track: string; lampOff: string; ok: string }
+/** The skins: night (the default, for dark themes), amber (one-color nineties cluster), paper (for light themes), mono. */
+export const SKINS: Record<string, Skin> = {
+  night: { text: '#e6e4df', muted: '#8f8e8a', track: '#34363a', lampOff: '#3a3b40', ok: '#86b3a4' },
+  amber: { text: '#f0b84a', muted: '#9a7a3a', track: '#3a2e14', lampOff: '#4a3c1c', ok: '#f0b84a' },
+  paper: { text: '#2a2a28', muted: '#7a7873', track: '#d9d6cf', lampOff: '#c4c1ba', ok: '#3f8f78' },
+  mono: { text: '#e6e4df', muted: '#8f8e8a', track: '#34363a', lampOff: '#3a3b40', ok: '#bdbbb5' },
+}
 
 /** The userConfig values; `register` copies the plugin's options over these defaults. */
-export const settings = { accent: 'green', warnAt: 20, badAt: 5 }
-const accent = (): string => ACCENTS[settings.accent] ?? ACCENTS.green
+export const settings = { skin: 'night', warnAt: 20, badAt: 5 }
+const skin = (): Skin => SKINS[settings.skin] ?? SKINS.night
 const FONT = "'Segoe UI','Helvetica Neue',Arial,sans-serif"
 
 export type Tone = 'ok' | 'warn' | 'bad'
-const toneColor = (t: Tone): string => (t === 'ok' ? accent() : t === 'warn' ? AMBER : RED)
+const toneColor = (t: Tone): string => (t === 'ok' ? skin().ok : t === 'warn' ? AMBER : RED)
 const RANK: Record<Tone, number> = { ok: 0, warn: 1, bad: 2 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
@@ -171,13 +175,13 @@ const text = (x: number, y: number, t: string, size: number, fill: string, ancho
 /** Barra sottile: traccia piena, riempimento in un colore solo, tacca opzionale. */
 const bar = (x: number, y: number, w: number, frac: number | null, tone: Tone, marker?: number | null): string => {
   const h = 4
-  let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${TRACK}"/>`
+  let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${skin().track}"/>`
   if (frac != null && frac > 0) {
     s += `<rect x="${x}" y="${y}" width="${f1(Math.max(h, w * clamp(frac, 0, 1)))}" height="${h}" rx="2" fill="${toneColor(tone)}"/>`
   }
   if (marker != null) {
     const mx = x + clamp(marker, 0, 1) * w
-    s += `<rect x="${f1(mx - 0.5)}" y="${y - 3}" width="1" height="${h + 6}" fill="${MUTED}"/>`
+    s += `<rect x="${f1(mx - 0.5)}" y="${y - 3}" width="1" height="${h + 6}" fill="${skin().muted}"/>`
   }
   return s
 }
@@ -189,7 +193,7 @@ const ENGINE =
 
 const engineLamp = (x: number, y: number, tone: Tone): string =>
   tone === 'ok'
-    ? `<path d="${ENGINE}" transform="translate(${x} ${y})" fill-rule="evenodd" fill="none" stroke="${LAMP_OFF}" stroke-width="1.2" stroke-linejoin="miter"/>`
+    ? `<path d="${ENGINE}" transform="translate(${x} ${y})" fill-rule="evenodd" fill="none" stroke="${skin().lampOff}" stroke-width="1.2" stroke-linejoin="miter"/>`
     : `<path d="${ENGINE}" transform="translate(${x} ${y})" fill-rule="evenodd" fill="${toneColor(tone)}" stroke="none"/>`
 
 /** I motivi che stanno in `max` caratteri, poi il conto di quelli lasciati fuori. */
@@ -259,14 +263,14 @@ export const buildSvg = (snap: Snap, now: number): string => {
   s += engineLamp(L, 5, tone)
   const shown = fitReasons(reasons, 44)
   s += `<text x="${L + 32}" y="20" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
-  s += `<tspan font-size="14" font-weight="600" fill="${TEXT}">${esc(shortModel(snap.model))}</tspan>`
+  s += `<tspan font-size="14" font-weight="600" fill="${skin().text}">${esc(shortModel(snap.model))}</tspan>`
   if (shown) s += `<tspan dx="12" font-size="12" fill="${toneColor(tone)}">${esc(shown)}</tspan>`
   s += `</text>`
-  s += text(R, 20, `${millions(snap.total)} M tokens`, 16, accent(), 'end', 600)
+  s += text(R, 20, `${millions(snap.total)} M tokens`, 16, skin().ok, 'end', 600)
 
   const cell = (r: Row, x: number, y: number, w: number) => {
-    s += text(x, y, r.name, 12, MUTED)
-    s += text(x + w, y, r.value, 12, TEXT, 'end')
+    s += text(x, y, r.name, 12, skin().muted)
+    s += text(x + w, y, r.value, 12, skin().text, 'end')
     s += bar(x, y + 7, w, r.frac, r.tone, r.marker)
   }
   cells.forEach((r, i) => cell(r, L + (i % 2) * (COL + GAP), 44 + ROW * Math.floor(i / 2), COL))
