@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
 import type { Snap } from '../types'
-import { ACTIONS } from './actions'
+import { ACTIONS, parseButtons } from './actions'
 import { INITIAL, buildLine, buildReport, buildSvg, pushReading, pushSample, settings, tokensOf } from './dash'
 
 const snapAtom = atom({ plugin: 'cruscotto', key: 'snap' } as const, INITIAL)
@@ -108,11 +108,13 @@ export const register: Register = (on, options) => {
 
     const now = await $.clock.now()
     const { Box, Button, Text } = $.ui.resolve(e)
-    const buttons = (options.buttons === false ? [] : ACTIONS).map(a => (
+    const file = typeof options.buttonsFile === 'string' ? options.buttonsFile : ''
+    const extra = file ? parseButtons(await $.fs.read(file).catch(() => '')) : []
+    const buttons = [...(options.buttons === false ? [] : ACTIONS), ...extra].map(a => (
       <Button
         key={a.key}
         label={a.label}
-        hotkey={a.hotkey}
+        hotkey={a.hotkey || undefined}
         variant="secondary"
         dimColor
         onPress={() => void $.prompt.submit({ text: a.text, asUser: true })}

@@ -32,3 +32,20 @@ export const ACTIONS: Action[] = [
     text: 'Speed up and parallelize where you can. Tell me why this is taking so long and how much time is left.',
   },
 ]
+
+/**
+ * Extra buttons from the person's Markdown file: each `## Label` heading starts
+ * one, the lines under it are the prompt. Hotkeys are the digits 1 to 9, in order.
+ */
+export const parseButtons = (text: string): Action[] => {
+  const out: Action[] = []
+  for (const block of text.split(/^## +/m).slice(1)) {
+    const nl = block.indexOf('\n')
+    const label = (nl < 0 ? block : block.slice(0, nl)).trim()
+    const body = (nl < 0 ? '' : block.slice(nl + 1)).trim()
+    if (!label || !body) continue
+    const n = out.length + 1
+    out.push({ key: `custom-${n}`, label, hotkey: n <= 9 ? String(n) : '', text: body })
+  }
+  return out
+}

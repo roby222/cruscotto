@@ -40,6 +40,23 @@ Each one submits a prompt as your own words:
 With the strip focused, the hotkeys are `g`, `c` and `h`. The texts live in
 `hooks/actions.ts`.
 
+### Your own buttons
+
+Point the **Your buttons** setting at a Markdown file. Each `## Label`
+heading is a button, the lines under it the prompt it sends:
+
+```markdown
+## Review
+Review the diff and list the problems, worst first.
+
+## Tests
+Run the tests. Fix what fails, then run them again.
+```
+
+They draw after the built-in ones, with the digits 1 to 9 as hotkeys; a
+digit works from the empty prompt too. Edit the file and the strip picks
+it up at its next redraw. Turn **Prompt buttons** off to keep only yours.
+
 ## Settings
 
 The gear at the right end of the buttons opens `/config`, where the
@@ -50,7 +67,8 @@ plugin's options live; the same screen appears once at install.
 | Skin | night | The whole palette: night for dark themes, amber for a one-color nineties cluster, paper for light themes, mono for grey |
 | Amber threshold | 20 | A bar turns amber, and the lamp with it, at this share left or less |
 | Red threshold | 5 | The same for red |
-| Prompt buttons | on | Show the three prompt buttons |
+| Prompt buttons | on | Show the three built-in prompt buttons |
+| Your buttons | none | A Markdown file with your own buttons, see above |
 
 A change there reloads the strip with the new values.
 

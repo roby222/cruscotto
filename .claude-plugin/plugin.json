@@ -38,8 +38,14 @@
     "buttons": {
       "type": "boolean",
       "title": "Prompt buttons",
-      "description": "Show the three prompt buttons under the gauges.",
+      "description": "Show the three built-in prompt buttons.",
       "default": true
+    },
+    "buttonsFile": {
+      "type": "file",
+      "title": "Your buttons",
+      "description": "A Markdown file with your own buttons: each `## Label` heading starts one, the lines under it are the prompt it sends. Hotkeys 1 to 9 in order.",
+      "default": ""
     }
   }
 }
