@@ -139,8 +139,9 @@ export const leftOf = (l: Limit): number => clamp(100 - l.pct, 0, 100)
 export const leftTone = (left: number | null): Tone => (left == null ? 'ok' : left <= settings.badAt ? 'bad' : left <= settings.warnAt ? 'warn' : 'ok')
 
 /** Spia e motivo: ambra quando una riserva scende, rossa in zona critica. */
-export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[] } => {
-  const issues: { tone: Tone; text: string }[] = []
+/** `reasons` is every issue; `notes` only those no gauge already shows, for the header. */
+export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[]; notes: string[] } => {
+  const issues: { tone: Tone; text: string; onBar?: boolean }[] = []
   const compactAt = snap.compactPct != null ? snap.compactPct / 100 : 0.8
 
   if (snap.ctxPct != null) {
@@ -162,11 +163,11 @@ export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[] }
       ? { tone: 'bad', text: 'session 5 h runs out within 30 min' }
       : { tone: 'warn', text: 'session 5 h runs out before reset' })
   }
-  if (snap.hasError) issues.push({ tone: 'bad', text: 'last turn failed' })
+  if (snap.hasError) issues.push({ tone: 'bad', text: 'last turn failed', onBar: false })
 
   issues.sort((a, b) => RANK[b.tone] - RANK[a.tone])
   const tone = issues[0]?.tone ?? 'ok'
-  return { tone, reasons: issues.map(i => i.text) }
+  return { tone, reasons: issues.map(i => i.text), notes: issues.filter(i => i.onBar === false).map(i => i.text) }
 }
 
 const text = (x: number, y: number, t: string, size: number, fill: string, anchor = 'start', weight = 400) =>
@@ -216,7 +217,7 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const compactAt = snap.compactPct != null ? snap.compactPct / 100 : 0.8
   const ctxFrac = ctx != null ? ctx / 100 : null
   const ctxTone: Tone = ctxFrac == null ? 'ok' : ctxFrac >= compactAt - 0.05 ? 'bad' : ctxFrac >= compactAt - 0.2 ? 'warn' : 'ok'
-  const { tone, reasons } = lamp(snap, now)
+  const { tone, notes } = lamp(snap, now)
 
   // Griglia 2 x 2: contesto e autonomia sopra, i limiti a due a due sotto.
   const r = range(snap, now)
@@ -261,7 +262,7 @@ export const buildSvg = (snap: Snap, now: number): string => {
 
   // Intestazione: spia, modello e motivo a sinistra; consumo a destra.
   s += engineLamp(L, 5, tone)
-  const shown = fitReasons(reasons, 44)
+  const shown = fitReasons(notes, 44)
   s += `<text x="${L + 32}" y="20" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
   s += `<tspan font-size="14" font-weight="600" fill="${skin().text}">${esc(shortModel(snap.model))}</tspan>`
   if (shown) s += `<tspan dx="12" font-size="12" fill="${toneColor(tone)}">${esc(shown)}</tspan>`

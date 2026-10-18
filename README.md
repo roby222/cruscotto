@@ -23,7 +23,8 @@ The lamp stays a dim outline while everything is fine. It turns amber when
 a window drops to 20% left or the context is within 20 points of
 compaction, and red at 5% left, within 5 points of compaction, when a window
 is used up, when the 5-hour window would run out within 30 minutes, or when
-the last turn failed. The reason is written next to it.
+the last turn failed. The gauges say which; only what no gauge shows, a
+failed turn, is written next to the lamp.
 
 `/cruscotto` prints the raw readings, to compare with the Usage panel.
 
