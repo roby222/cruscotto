@@ -2,5 +2,12 @@
   "name": "cruscotto",
   "version": "0.1.0",
   "description": "Nineties dashboard above the prompt: context, 5-hour and weekly limits, model, tokens per minute, total tokens in millions, and a check-engine lamp.",
+  "author": {
+    "name": "Roberto Pisu",
+    "url": "https://github.com/roby222"
+  },
+  "homepage": "https://github.com/roby222/cruscotto",
+  "repository": "https://github.com/roby222/cruscotto",
+  "license": "MIT",
   "types": "./types/index.d.ts"
 }

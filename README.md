@@ -46,6 +46,9 @@ At the prompt of a terminal session:
 /plugin install cruscotto --marketplace roby222/cruscotto
 ```
 
+Answer `y` to add the marketplace, then pick the user scope: the strip
+appears in that session right away and in every session after.
+
 From a shell:
 
 ```

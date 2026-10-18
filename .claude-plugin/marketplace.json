@@ -1,5 +1,14 @@
 {
   "name": "cruscotto",
-  "owner": { "name": "Roberto Pisu" },
-  "plugins": [{ "name": "cruscotto", "source": "./" }]
+  "owner": {
+    "name": "Roberto Pisu"
+  },
+  "plugins": [
+    {
+      "name": "cruscotto",
+      "source": "./",
+      "description": "Instrument strip above the prompt: context, range, 5-hour and weekly gauges, check-engine lamp, three prompt buttons."
+    }
+  ],
+  "description": "cruscotto: a nineties instrument strip above the Claude Code prompt"
 }
