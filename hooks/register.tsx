@@ -25,16 +25,21 @@ export const register: Register = (on, options) => {
     return { text: buildReport(snap, await $.clock.now()) }
   })
 
-  on('prompt.submit', ($, e, next) => {
+  on('prompt.submit', async ($, e, next) => {
     tools = 0
+    await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0 }))
 
     return next(e)
   })
 
-  on('tool.call', ($, e, next) => {
+  on('tool.call', async ($, e, next) => {
     tools += 1
-
-    return next(e)
+    await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: s.toolsRunning + 1 }))
+    try {
+      return await next(e)
+    } finally {
+      await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: Math.max(0, s.toolsRunning - 1) }))
+    }
   })
 
   on('session.measure', async ($, e, next) => {

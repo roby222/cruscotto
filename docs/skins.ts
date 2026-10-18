@@ -13,6 +13,8 @@ const snap = {
     { kind: 'seven_day', pct: 70, resetsAt: new Date(now + 3 * h + 38 * 60_000).toISOString() },
   ],
   burn: [{ t: now - h, pct: 44 }, { t: now, pct: 56 }],
+  // a few lamps lit, to show them: cold cache, two tools and one agent running
+  cacheHit: 0.3, toolsRunning: 2, agentsRunning: 1,
 }
 const BG: Record<string, string> = { night: '#1b1c1e', amber: '#1a1408', paper: '#f4f2ec', mono: '#1b1c1e' }
 for (const skin of Object.keys(SKINS)) {
@@ -24,5 +26,5 @@ for (const skin of Object.keys(SKINS)) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w + 24} ${h + 24}" width="${w + 24}" height="${h + 24}">`
     + `<rect width="100%" height="100%" rx="8" fill="${BG[skin]}"/><g transform="translate(12 12)">${body}</g></svg>`
   writeFileSync(new URL(`./skin-${skin}.svg`, import.meta.url), svg)
-  console.log(skin, svg.length, 'bytes', svg.includes('left at the reset') ? 'range ok' : 'range?')
+  console.log(skin, svg.length, 'bytes', svg.includes('spare') ? 'range ok' : 'range?')
 }

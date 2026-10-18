@@ -1,10 +1,10 @@
 # cruscotto
 
 A quiet instrument strip above the Claude Code prompt, in the spirit of a
-nineties night-lit dashboard: three thin bars, one check-engine lamp, and
+nineties night-lit dashboard: three thin bars, a row of six lamps, and
 three buttons for the prompts you send most often.
 
-![The strip: check-engine lamp, range sentence, total tokens, the three gauges](docs/skin-night.svg)
+![The strip: the lamp row, the range sentence, total tokens, the three gauges](docs/skin-night.svg)
 
 ## What it shows
 
@@ -14,23 +14,39 @@ three buttons for the prompts you send most often.
 | Session 5 h | Share of the 5-hour rate-limit window left, and when it resets |
 | Weekly | Share of the 7-day window left, and when it resets; any other window the API reports gets its own bar |
 
-The header carries the check-engine lamp, the range sentence and the total
-tokens counted, in millions, kept across sessions.
+The header carries the lamp row, the range sentence and the total tokens
+counted, in millions, kept across sessions.
 
 The range sentence is a verdict, so it has no bar: at the pace of the last
-90 minutes, does the 5-hour window last to its reset? "lasts to the reset,
-12% to spare" means yes, and little to spare is the ideal, not a warning.
-"runs out in 1 h 20 min, before the reset" means no: amber if that is 30
-minutes or more before the reset, red if it is within 30 minutes from now. The total sums input, output, cache-read
-and cache-write tokens of every turn.
+90 minutes, does the 5-hour window last to its reset? "5 h window lasts to
+the reset, 12% spare" means yes, and little to spare is the ideal, not a
+warning. "5 h window runs out in 1 h 20 min" means no: amber if that is 30
+minutes or more before the reset, red if it is within 30 minutes from now.
 
-The lamp stays a dim outline while everything is fine. It turns amber when
-a window drops to 20% left or the context is within 20 points of
-compaction, and red at 5% left, within 5 points of compaction, when a window
-is used up, when the 5-hour window would run out within 30 minutes, or when
-the last turn failed. Running out less than 30 minutes before the reset is
-no warning: the reset is as good as a refill. The gauges say which; only what no gauge shows, a
-failed turn, is written next to the lamp.
+The total sums input, output, cache-read and cache-write tokens of every
+turn.
+
+The bars turn amber at 20% left, or within 20 points of compaction, and
+red at 5%; both thresholds are settings.
+
+## Lamps
+
+Like the lamps of a car cluster: one state each, and none for what a bar
+already shows. Off, a lamp is a dim outline; lit, it takes its color, and
+hovering it tells why. Red means stop, amber means attention, green is
+information.
+
+| Lamp | Glyph | Lights when | Color |
+|---|---|---|---|
+| Failed | warning triangle | the last turn ended in error | red |
+| Cost | coin | the session cost reaches the cost setting, $10 by default | amber |
+| Cold | snowflake | the cache hit of the last turn is under 50%: the context is being paid at full price, as after a compaction | amber |
+| Tools | wrench, with a count | tool calls are running right now | green |
+| Agents | two people, with a count | subagents are running right now | green |
+| Turbo | lightning bolt | the token rate of the last 5 minutes reaches 200 k/min | green |
+
+In the terminal, lit lamps are words in the line: `TOOLS 2, COLD`.
+`/cruscotto` lists them too.
 
 `/cruscotto` prints the raw readings, to compare with the Usage panel.
 
@@ -72,8 +88,12 @@ plugin's options live; the same screen appears once at install.
 | Option | Default | What it does |
 |---|---|---|
 | Skin | night | The whole palette: night for dark themes, amber for a one-color nineties cluster, paper for light themes, mono for grey |
-| Amber threshold | 20 | A bar turns amber, and the lamp with it, at this share left or less |
+| Amber threshold | 20 | A bar turns amber at this share left or less |
 | Red threshold | 5 | The same for red |
+| Lamps | on | Show the lamp row |
+| Cost lamp | 10 | Session cost in USD that lights the cost lamp; 0 turns it off |
+| Cold cache lamp | 50 | Cache hit share under which the cold lamp lights |
+| Turbo lamp | 200000 | Tokens per minute that light the turbo lamp; 0 turns it off |
 | Prompt buttons | on | Show the three built-in prompt buttons |
 | Your buttons | none | A Markdown file with your own buttons, see above |
 
@@ -148,7 +168,7 @@ types exist.
 - `.claude-plugin/plugin.json`: the manifest.
 - `.claude-plugin/marketplace.json`: makes this repository installable.
 - `hooks/register.tsx`: the hooks module, drawing and state.
-- `hooks/dash.ts`: thresholds, lamp, range, SVG.
+- `hooks/dash.ts`: thresholds, lamps, range, SVG.
 - `hooks/actions.ts`: the three buttons.
 - `types/index.d.ts`: the state contract.
 - `hooks/*.test.ts`: tests, run with `claude plugin test`.

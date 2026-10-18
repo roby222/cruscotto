@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { INITIAL, buildSvg, fitReasons, lamp, leftTone, limitLabel, millions, pushReading, range, rangeTone, pushSample, ratePerMin, rateMax, SKINS, settings, shortModel, tokensOf, untilReset } from './dash'
+import { INITIAL, buildLine, buildSvg, fitReasons, lamp, lampWords, lamps, leftTone, limitLabel, millions, pushReading, range, rangeTone, pushSample, ratePerMin, rateMax, SKINS, settings, shortModel, tokensOf, untilReset } from './dash'
 
 describe('dash helpers', () => {
   test('tokensOf somma i quattro conteggi', () => {
@@ -80,7 +80,7 @@ describe('dash helpers', () => {
     burn = pushReading([], { t: now - h, pct: 65 })
     burn = pushReading(burn, { t: now, pct: 70 })
     expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'lasts', spare: 20 })
-    expect(buildSvg({ ...INITIAL, limits, burn }, now).includes('20% to spare')).toBe(true)
+    expect(buildSvg({ ...INITIAL, limits, burn }, now).includes('20% spare')).toBe(true)
     expect(lamp({ ...INITIAL, limits, burn }, now).tone).toBe('ok') // reaching the reset is fine, whatever is left
     // Dopo un reset la quota scende: nessuna proiezione, avanza quel che resta.
     burn = pushReading([], { t: now - h, pct: 80 })
@@ -115,5 +115,24 @@ describe('dash helpers', () => {
     expect(night.includes(SKINS.night.text)).toBe(true)
     expect(amber.includes(SKINS.amber.text)).toBe(true)
     expect(amber.includes(SKINS.night.text)).toBe(false)
+  })
+
+  test('le spie: uno stato ciascuna, soglie dalle impostazioni', () => {
+    const now = 10 * 3_600_000
+    const quiet = { ...INITIAL, cacheHit: 0.9, usd: 2 }
+    expect(lampWords(lamps(quiet, now))).toEqual([])
+    const busy = { ...quiet, hasError: true, toolsRunning: 3, agentsRunning: 1, cacheHit: 0.2, usd: 12 }
+    expect(lampWords(lamps(busy, now))).toEqual(['FAILED', 'COST', 'COLD', 'TOOLS 3', 'AGENTS 1'])
+    expect(lamps(busy, now).find(l => l.key === 'tools')?.count).toBe(3)
+    // cost lamp off at 0; cold threshold follows the setting
+    Object.assign(settings, { costAlertUsd: 0, coldCacheBelow: 10 })
+    expect(lampWords(lamps(busy, now))).toEqual(['FAILED', 'TOOLS 3', 'AGENTS 1'])
+    Object.assign(settings, { costAlertUsd: 10, coldCacheBelow: 50 })
+    // turbo from the 5-minute rate
+    const fast = { ...quiet, samples: [{ t: now - 60_000, tokens: 600_000 }, { t: now, tokens: 600_000 }] } // 1.2 M in 5 min = 240 k/min
+    expect(lampWords(lamps(fast, now))).toEqual(['TURBO'])
+    // the terminal line carries the words; the svg carries the tooltips
+    expect(buildLine(busy, now).includes('TOOLS 3')).toBe(true)
+    expect(buildSvg(busy, now).includes('<title>3 tool calls running</title>')).toBe(true)
   })
 })

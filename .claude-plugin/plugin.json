@@ -35,6 +35,30 @@
       "description": "A bar turns red, and the lamp with it, when this share of its window or less is left.",
       "default": 5
     },
+    "lamps": {
+      "type": "boolean",
+      "title": "Lamps",
+      "description": "Show the six lamps in the header: failed turn, cost, cold cache, tools running, agents running, turbo.",
+      "default": true
+    },
+    "costAlertUsd": {
+      "type": "number",
+      "title": "Cost lamp (USD)",
+      "description": "The cost lamp lights amber when the session cost reaches this; 0 turns it off.",
+      "default": 10
+    },
+    "coldCacheBelow": {
+      "type": "number",
+      "title": "Cold cache lamp (%)",
+      "description": "The cold lamp lights amber when the cache hit of the last turn is under this share.",
+      "default": 50
+    },
+    "turboAt": {
+      "type": "number",
+      "title": "Turbo lamp (tokens/min)",
+      "description": "The turbo lamp lights when the token rate of the last 5 minutes reaches this; 0 turns it off.",
+      "default": 200000
+    },
     "buttons": {
       "type": "boolean",
       "title": "Prompt buttons",
