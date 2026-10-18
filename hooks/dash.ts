@@ -188,9 +188,10 @@ const bar = (x: number, y: number, w: number, frac: number | null, tone: Tone, m
 }
 
 // Sagoma del motore come la spia di avaria ISO: blocco, presa d'aria, scarico, piede; 24 × 18.
+// ISO check-engine silhouette, 24 x 18: cylinder head on top, pulley stub left, exhaust right, sump below.
 const ENGINE =
-  'M4 6H7V3H13V6H16L18 8H22V14H19V16H15V14H8L6 16H3V13H1V6H4Z' + // sagoma
-  'M9 9H14V12H9Z' // foro centrale
+  'M7 2H14V5H17V8H21V14H17V16H11V14H5V11H2V8H5V5H7Z' +
+  'M9.5 10.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0Z' // bore
 
 const engineLamp = (x: number, y: number, tone: Tone): string =>
   tone === 'ok'
@@ -260,13 +261,10 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const H = 32 + lines * ROW
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`
 
-  // Intestazione: spia, modello e motivo a sinistra; consumo a destra.
+  // Intestazione: spia e nota a sinistra; consumo a destra. Il modello lo mostra già il compositore.
   s += engineLamp(L, 5, tone)
   const shown = fitReasons(notes, 44)
-  s += `<text x="${L + 32}" y="20" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
-  s += `<tspan font-size="14" font-weight="600" fill="${skin().text}">${esc(shortModel(snap.model))}</tspan>`
-  if (shown) s += `<tspan dx="12" font-size="12" fill="${toneColor(tone)}">${esc(shown)}</tspan>`
-  s += `</text>`
+  if (shown) s += text(L + 32, 20, shown, 12, toneColor(tone))
   s += text(R, 20, `${millions(snap.total)} M tokens`, 16, skin().ok, 'end', 600)
 
   const cell = (r: Row, x: number, y: number, w: number) => {
@@ -287,7 +285,7 @@ export const buildLine = (snap: Snap, now: number): string => {
   const limits = snap.limits.map(l => `${limitLabel(l.kind)} ${Math.round(leftOf(l))}% left`).join(' | ')
   const { reasons } = lamp(snap, now)
   const warn = reasons.length ? ` | ${reasons.join(', ')}` : ''
-  return `${shortModel(snap.model)} | ${compactTokens(rate)} tok/min | ctx ${ctx}${limits ? ' | ' + limits : ''} | total ${millions(snap.total)}M${warn}`
+  return `${compactTokens(rate)} tok/min | ctx ${ctx}${limits ? ' | ' + limits : ''} | total ${millions(snap.total)}M${warn}`
 }
 
 /** Le letture grezze, per confrontarle col pannello Usage. */

@@ -15,7 +15,7 @@ three buttons for the prompts you send most often.
 | Session 5 h | Share of the 5-hour rate-limit window left, and when it resets |
 | Weekly | Share of the 7-day window left, and when it resets; any other window the API reports gets its own bar |
 
-The header carries the model in use and the total tokens counted, in
+The header carries the check-engine lamp and the total tokens counted, in
 millions, kept across sessions. The total sums input, output, cache-read
 and cache-write tokens of every turn.
 

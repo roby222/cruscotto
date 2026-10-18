@@ -42,7 +42,7 @@ describe('dash helpers', () => {
       0,
     )
     expect(svg.startsWith('<svg')).toBe(true)
-    expect(svg.includes('Opus 5.5')).toBe(true)
+    expect(svg.includes('Opus 5.5')).toBe(false) // the composer already names the model
     expect(svg.includes('Session 5 h')).toBe(true)
     expect(svg.includes('Range')).toBe(true)
     expect(svg.includes('Weekly Fable')).toBe(true)
