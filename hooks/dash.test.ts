@@ -72,14 +72,14 @@ describe('dash helpers', () => {
     let burn = pushReading([], { t: now - h, pct: 50 })
     burn = pushReading(burn, { t: now, pct: 70 })
     expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'runsOut', msToEmpty: 1.5 * h, msToReset: 2 * h })
-    // 5 punti in un'ora: dura 6 h, oltre il reset.
+    // 5 punti in un'ora: al reset tra 2 h siamo all'80%, ne avanza il 20.
     burn = pushReading([], { t: now - h, pct: 65 })
     burn = pushReading(burn, { t: now, pct: 70 })
-    expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'lasts' })
-    // Dopo un reset la quota scende: nessuna proiezione.
+    expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'lasts', spare: 20 })
+    // Dopo un reset la quota scende: nessuna proiezione, avanza quel che resta.
     burn = pushReading([], { t: now - h, pct: 80 })
     burn = pushReading(burn, { t: now, pct: 10 })
-    expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'lasts' })
+    expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'lasts', spare: 90 })
   })
 
   test('la spia si accende per gradi', () => {

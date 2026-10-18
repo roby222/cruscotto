@@ -91,7 +91,7 @@ export const pushReading = (burn: Reading[], r: Reading): Reading[] =>
 
 export type Range =
   | { status: 'measuring' }
-  | { status: 'lasts' }
+  | { status: 'lasts'; spare: number }
   | { status: 'runsOut'; msToEmpty: number; msToReset: number | null }
 
 /** Autonomia della finestra 5 h: a questo ritmo, finisce prima del reset? */
@@ -102,11 +102,14 @@ export const range = (snap: Snap, now: number): Range => {
   const last = live[live.length - 1]
   if (last.t - first.t < BURN_MIN_SPAN_MS) return { status: 'measuring' }
   const slope = (last.pct - first.pct) / (last.t - first.t)
-  if (slope <= 0) return { status: 'lasts' }
-  const msToEmpty = ((100 - last.pct) / slope)
   const five = snap.limits.find(l => l.kind === 'five_hour')
   const msToReset = five?.resetsAt ? Date.parse(five.resetsAt) - now : null
-  if (msToReset != null && msToEmpty >= msToReset) return { status: 'lasts' }
+  // spare: the share of the window still unused when the reset comes, at this pace.
+  if (slope <= 0) return { status: 'lasts', spare: Math.round(100 - last.pct) }
+  const msToEmpty = ((100 - last.pct) / slope)
+  if (msToReset != null && msToEmpty >= msToReset) {
+    return { status: 'lasts', spare: Math.round(100 - last.pct - slope * msToReset) }
+  }
   return { status: 'runsOut', msToEmpty, msToReset }
 }
 
@@ -214,7 +217,7 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const rangeCell: Row = r.status === 'measuring'
     ? { name: 'Range', frac: null, tone: 'ok', value: 'measuring, needs 5 min of use' }
     : r.status === 'lasts'
-      ? { name: 'Range', frac: 1, tone: 'ok', value: 'lasts until the 5 h reset' }
+      ? { name: 'Range', frac: r.spare / 100, tone: 'ok', value: `reaches the reset with ${r.spare}% to spare` }
       : {
           name: 'Range',
           frac: r.msToReset ? clamp(r.msToEmpty / r.msToReset, 0, 1) : null,
