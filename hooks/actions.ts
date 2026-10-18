@@ -4,8 +4,8 @@ export type Action = { key: string; label: string; hotkey: string; text: string 
 export const ACTIONS: Action[] = [
   {
     key: 'risolvi',
-    label: 'Your call, go ahead',
-    hotkey: 'y',
+    label: 'Go ahead',
+    hotkey: 'g',
     text: 'Solve it, go ahead on your own, find a solution and tell me how you solved it',
   },
   {
