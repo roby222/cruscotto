@@ -145,7 +145,6 @@ export const register: Register = (on, options) => {
         label={a.label}
         hotkey={a.hotkey || undefined}
         variant="secondary"
-        dimColor
         onPress={() => void $.prompt.submit({ text: a.text, asUser: true })}
       />
     ))
@@ -155,7 +154,6 @@ export const register: Register = (on, options) => {
         key="settings"
         label="⚙️ Settings"
         plain
-        dimColor
         onPress={() => void $.command.run({ command: 'config' }).catch(() => $.ui.toast('Type /config to change the cruscotto settings'))}
       />
     )
