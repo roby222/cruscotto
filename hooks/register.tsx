@@ -3,11 +3,12 @@ import type { Register } from 'claude-code'
 
 import type { Snap } from '../types'
 import { ACTIONS } from './actions'
-import { INITIAL, buildLine, buildReport, buildSvg, pushReading, pushSample, tokensOf } from './dash'
+import { INITIAL, buildLine, buildReport, buildSvg, pushReading, pushSample, settings, tokensOf } from './dash'
 
 const snapAtom = atom({ plugin: 'cruscotto', key: 'snap' } as const, INITIAL)
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  Object.assign(settings, options)
   let tools = 0
 
   on('session.start', async ($, e, next) => {
@@ -107,7 +108,7 @@ export const register: Register = on => {
 
     const now = await $.clock.now()
     const { Box, Button, Text } = $.ui.resolve(e)
-    const buttons = ACTIONS.map(a => (
+    const buttons = (options.buttons === false ? [] : ACTIONS).map(a => (
       <Button
         key={a.key}
         label={a.label}
@@ -117,6 +118,16 @@ export const register: Register = on => {
         onPress={() => void $.prompt.submit({ text: a.text, asUser: true })}
       />
     ))
+    // The gear opens the engine's own settings menu, where this plugin's options live.
+    buttons.push(
+      <Button
+        key="settings"
+        label="⚙"
+        plain
+        dimColor
+        onPress={() => void $.command.run({ command: 'config' }).catch(() => $.ui.toast('Type /config to change the cruscotto settings'))}
+      />,
+    )
 
     if (e.surface === 'terminal') {
       return (

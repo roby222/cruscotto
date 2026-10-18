@@ -11,7 +11,7 @@ three buttons for the prompts you send most often.
 | Gauge | Reading |
 |---|---|
 | Context | How full the context window is, with a tick at the auto-compaction threshold |
-| Range | At the current pace, how much of the 5-hour window is still left when it resets, or when it runs out before that; amber under 20%, red under 5% |
+| Range | At the current pace, how much of the 5-hour window is still left when it resets, or when it runs out before that |
 | Session 5 h | Share of the 5-hour rate-limit window left, and when it resets |
 | Weekly | Share of the 7-day window left, and when it resets; any other window the API reports gets its own bar |
 
@@ -39,6 +39,20 @@ Each one submits a prompt as your own words:
 
 With the strip focused, the hotkeys are `g`, `c` and `h`. The texts live in
 `hooks/actions.ts`.
+
+## Settings
+
+The gear at the right end of the buttons opens `/config`, where the
+plugin's options live; the same screen appears once at install.
+
+| Option | Default | What it does |
+|---|---|---|
+| Accent color | green | Color of the healthy bars and the token counter: green, amber, cyan or white |
+| Amber threshold | 20 | A bar turns amber, and the lamp with it, at this share left or less |
+| Red threshold | 5 | The same for red |
+| Prompt buttons | on | Show the three prompt buttons |
+
+A change there reloads the strip with the new values.
 
 ## Install
 

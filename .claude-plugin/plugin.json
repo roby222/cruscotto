@@ -9,5 +9,37 @@
   "homepage": "https://github.com/roby222/cruscotto",
   "repository": "https://github.com/roby222/cruscotto",
   "license": "MIT",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "accent": {
+      "type": "string",
+      "title": "Accent color",
+      "description": "Color of the healthy bars and the token counter.",
+      "default": "green",
+      "options": [
+        "green",
+        "amber",
+        "cyan",
+        "white"
+      ]
+    },
+    "warnAt": {
+      "type": "number",
+      "title": "Amber threshold (%)",
+      "description": "A bar turns amber, and the lamp with it, when this share of its window or less is left.",
+      "default": 20
+    },
+    "badAt": {
+      "type": "number",
+      "title": "Red threshold (%)",
+      "description": "A bar turns red, and the lamp with it, when this share of its window or less is left.",
+      "default": 5
+    },
+    "buttons": {
+      "type": "boolean",
+      "title": "Prompt buttons",
+      "description": "Show the three prompt buttons under the gauges.",
+      "default": true
+    }
+  }
 }

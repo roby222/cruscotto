@@ -27,13 +27,17 @@ const TEXT = '#e6e4df'
 const MUTED = '#8f8e8a'
 const TRACK = '#34363a'
 const LAMP_OFF = '#3a3b40'
-const IVORY = '#86b3a4'
 const AMBER = '#d9a441'
 const RED = '#d96b5a'
+const ACCENTS: Record<string, string> = { green: '#86b3a4', amber: AMBER, cyan: '#7fb8c9', white: '#e6e4df' }
+
+/** The userConfig values; `register` copies the plugin's options over these defaults. */
+export const settings = { accent: 'green', warnAt: 20, badAt: 5 }
+const accent = (): string => ACCENTS[settings.accent] ?? ACCENTS.green
 const FONT = "'Segoe UI','Helvetica Neue',Arial,sans-serif"
 
 export type Tone = 'ok' | 'warn' | 'bad'
-const TONE_COLOR: Record<Tone, string> = { ok: IVORY, warn: AMBER, bad: RED }
+const toneColor = (t: Tone): string => (t === 'ok' ? accent() : t === 'warn' ? AMBER : RED)
 const RANK: Record<Tone, number> = { ok: 0, warn: 1, bad: 2 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
@@ -116,8 +120,6 @@ export const range = (snap: Snap, now: number): Range => {
 const spanText = (ms: number): string => untilReset(new Date(ms).toISOString(), 0)
 
 /** Soglie sulla quota rimasta: ambra al 20%, rossa al 5%. */
-export const WARN_LEFT = 20
-export const BAD_LEFT = 5
 
 /** Nome di una finestra come nel pannello Usage: `five_hour`, `seven_day`, `seven_day_fable`... */
 export const limitLabel = (kind: string): string => {
@@ -130,7 +132,7 @@ export const limitLabel = (kind: string): string => {
 }
 
 export const leftOf = (l: Limit): number => clamp(100 - l.pct, 0, 100)
-export const leftTone = (left: number | null): Tone => (left == null ? 'ok' : left <= BAD_LEFT ? 'bad' : left <= WARN_LEFT ? 'warn' : 'ok')
+export const leftTone = (left: number | null): Tone => (left == null ? 'ok' : left <= settings.badAt ? 'bad' : left <= settings.warnAt ? 'warn' : 'ok')
 
 /** Spia e motivo: ambra quando una riserva scende, rossa in zona critica. */
 export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[] } => {
@@ -147,8 +149,8 @@ export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[] }
     const label = limitLabel(l.kind)
     const name = label[0].toLowerCase() + label.slice(1)
     if (left <= 0) issues.push({ tone: 'bad', text: `${name} limit used up` })
-    else if (left <= BAD_LEFT) issues.push({ tone: 'bad', text: `${name} limit almost used up` })
-    else if (left <= WARN_LEFT) issues.push({ tone: 'warn', text: `${name} limit running low` })
+    else if (left <= settings.badAt) issues.push({ tone: 'bad', text: `${name} limit almost used up` })
+    else if (left <= settings.warnAt) issues.push({ tone: 'warn', text: `${name} limit running low` })
   }
   const r = range(snap, now)
   if (r.status === 'runsOut') {
@@ -171,7 +173,7 @@ const bar = (x: number, y: number, w: number, frac: number | null, tone: Tone, m
   const h = 4
   let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${TRACK}"/>`
   if (frac != null && frac > 0) {
-    s += `<rect x="${x}" y="${y}" width="${f1(Math.max(h, w * clamp(frac, 0, 1)))}" height="${h}" rx="2" fill="${TONE_COLOR[tone]}"/>`
+    s += `<rect x="${x}" y="${y}" width="${f1(Math.max(h, w * clamp(frac, 0, 1)))}" height="${h}" rx="2" fill="${toneColor(tone)}"/>`
   }
   if (marker != null) {
     const mx = x + clamp(marker, 0, 1) * w
@@ -188,7 +190,7 @@ const ENGINE =
 const engineLamp = (x: number, y: number, tone: Tone): string =>
   tone === 'ok'
     ? `<path d="${ENGINE}" transform="translate(${x} ${y})" fill-rule="evenodd" fill="none" stroke="${LAMP_OFF}" stroke-width="1.2" stroke-linejoin="miter"/>`
-    : `<path d="${ENGINE}" transform="translate(${x} ${y})" fill-rule="evenodd" fill="${TONE_COLOR[tone]}" stroke="none"/>`
+    : `<path d="${ENGINE}" transform="translate(${x} ${y})" fill-rule="evenodd" fill="${toneColor(tone)}" stroke="none"/>`
 
 /** I motivi che stanno in `max` caratteri, poi il conto di quelli lasciati fuori. */
 export const fitReasons = (reasons: string[], max: number): string => {
@@ -258,9 +260,9 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const shown = fitReasons(reasons, 44)
   s += `<text x="${L + 32}" y="20" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
   s += `<tspan font-size="14" font-weight="600" fill="${TEXT}">${esc(shortModel(snap.model))}</tspan>`
-  if (shown) s += `<tspan dx="12" font-size="12" fill="${TONE_COLOR[tone]}">${esc(shown)}</tspan>`
+  if (shown) s += `<tspan dx="12" font-size="12" fill="${toneColor(tone)}">${esc(shown)}</tspan>`
   s += `</text>`
-  s += text(R, 20, `${millions(snap.total)} M tokens`, 16, IVORY, 'end', 600)
+  s += text(R, 20, `${millions(snap.total)} M tokens`, 16, accent(), 'end', 600)
 
   const cell = (r: Row, x: number, y: number, w: number) => {
     s += text(x, y, r.name, 12, MUTED)

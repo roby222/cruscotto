@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { INITIAL, buildSvg, fitReasons, lamp, limitLabel, millions, pushReading, range, pushSample, ratePerMin, rateMax, shortModel, tokensOf, untilReset } from './dash'
+import { INITIAL, buildSvg, fitReasons, lamp, leftTone, limitLabel, millions, pushReading, range, pushSample, ratePerMin, rateMax, settings, shortModel, tokensOf, untilReset } from './dash'
 
 describe('dash helpers', () => {
   test('tokensOf somma i quattro conteggi', () => {
@@ -90,5 +90,14 @@ describe('dash helpers', () => {
       tone: 'bad',
       reasons: ['context almost full', 'weekly limit running low'],
     })
+  })
+
+  test('le soglie seguono le impostazioni', () => {
+    expect(leftTone(15)).toBe('warn')
+    Object.assign(settings, { warnAt: 50, badAt: 10 })
+    expect(leftTone(15)).toBe('warn')
+    expect(leftTone(8)).toBe('bad')
+    expect(leftTone(60)).toBe('ok')
+    Object.assign(settings, { warnAt: 20, badAt: 5 })
   })
 })
