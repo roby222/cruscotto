@@ -124,7 +124,7 @@ export const register: Register = (on, options) => {
     buttons.push(
       <Button
         key="settings"
-        label="⚙"
+        label="⚙️ Settings"
         plain
         dimColor
         onPress={() => void $.command.run({ command: 'config' }).catch(() => $.ui.toast('Type /config to change the cruscotto settings'))}

@@ -61,7 +61,7 @@ it up at its next redraw. Turn **Prompt buttons** off to keep only yours.
 
 ## Settings
 
-The gear at the right end of the buttons opens `/config`, where the
+The **⚙️ Settings** button at the right end of the row opens `/config`, where the
 plugin's options live; the same screen appears once at install.
 
 | Option | Default | What it does |

@@ -127,7 +127,7 @@ export const SOON_MS = 30 * 60 * 1000
 /** The Range color, shared by its bar and the lamp: red if empty within 30 min, amber if empty more than 30 min before the reset, else by the margin. */
 export const rangeTone = (r: Range): Tone =>
   r.status === 'runsOut'
-    ? r.msToEmpty < SOON_MS ? 'bad' : r.msToReset != null && r.msToReset - r.msToEmpty > SOON_MS ? 'warn' : 'ok'
+    ? r.msToEmpty < SOON_MS ? 'bad' : r.msToReset != null && r.msToReset - r.msToEmpty >= SOON_MS ? 'warn' : 'ok'
     : r.status === 'lasts' ? leftTone(r.spare) : 'ok'
 
 const spanText = (ms: number): string => untilReset(new Date(ms).toISOString(), 0)
