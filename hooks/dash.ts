@@ -124,11 +124,11 @@ export const range = (snap: Snap, now: number): Range => {
 
 export const SOON_MS = 30 * 60 * 1000
 
-/** The Range color, shared by its bar and the lamp: red if empty within 30 min, amber if empty more than 30 min before the reset, else by the margin. */
+/** The Range color, shared by its bar and the lamp: red if empty within 30 min, amber if empty 30 min or more before the reset. Reaching the reset is fine however little is left: the reset is the refill. */
 export const rangeTone = (r: Range): Tone =>
   r.status === 'runsOut'
     ? r.msToEmpty < SOON_MS ? 'bad' : r.msToReset != null && r.msToReset - r.msToEmpty >= SOON_MS ? 'warn' : 'ok'
-    : r.status === 'lasts' ? leftTone(r.spare) : 'ok'
+    : 'ok'
 
 const spanText = (ms: number): string => untilReset(new Date(ms).toISOString(), 0)
 
@@ -168,11 +168,7 @@ export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[]; 
   }
   const r = range(snap, now)
   const rt = rangeTone(r)
-  if (rt !== 'ok') {
-    issues.push({ tone: rt, text: r.status === 'runsOut'
-      ? (rt === 'bad' ? 'session 5 h runs out within 30 min' : 'session 5 h runs out well before reset')
-      : 'session 5 h tight at the reset' })
-  }
+  if (rt !== 'ok') issues.push({ tone: rt, text: rt === 'bad' ? 'session 5 h runs out within 30 min' : 'session 5 h runs out well before reset' })
   if (snap.hasError) issues.push({ tone: 'bad', text: 'last turn failed', onBar: false })
 
   issues.sort((a, b) => RANK[b.tone] - RANK[a.tone])
@@ -236,7 +232,7 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const rangeCell: Row = r.status === 'measuring'
     ? { name: 'Range', frac: null, tone: 'ok', value: 'measuring, needs 5 min of use' }
     : r.status === 'lasts'
-      ? { name: 'Range', frac: r.spare / 100, tone: rangeTone(r), value: `at this pace, ${r.spare}% left at the reset` }
+      ? { name: 'Range', frac: 1, tone: 'ok', value: `lasts to the reset, ${r.spare}% to spare at this pace` }
       : {
           name: 'Range',
           frac: r.msToReset ? clamp(r.msToEmpty / r.msToReset, 0, 1) : null,
