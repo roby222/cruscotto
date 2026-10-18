@@ -217,7 +217,7 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const rangeCell: Row = r.status === 'measuring'
     ? { name: 'Range', frac: null, tone: 'ok', value: 'measuring, needs 5 min of use' }
     : r.status === 'lasts'
-      ? { name: 'Range', frac: r.spare / 100, tone: 'ok', value: `reaches the reset with ${r.spare}% to spare` }
+      ? { name: 'Range', frac: r.spare / 100, tone: leftTone(r.spare), value: `at this pace, ${r.spare}% left at the reset` }
       : {
           name: 'Range',
           frac: r.msToReset ? clamp(r.msToEmpty / r.msToReset, 0, 1) : null,

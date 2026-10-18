@@ -11,7 +11,7 @@ three buttons for the prompts you send most often.
 | Gauge | Reading |
 |---|---|
 | Context | How full the context window is, with a tick at the auto-compaction threshold |
-| Range | At the current pace, how much of the 5-hour window is still to spare when it resets, or when it runs out before that |
+| Range | At the current pace, how much of the 5-hour window is still left when it resets, or when it runs out before that; amber under 20%, red under 5% |
 | Session 5 h | Share of the 5-hour rate-limit window left, and when it resets |
 | Weekly | Share of the 7-day window left, and when it resets; any other window the API reports gets its own bar |
 
