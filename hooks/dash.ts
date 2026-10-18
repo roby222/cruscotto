@@ -219,7 +219,7 @@ export const buildSvg = (snap: Snap, now: number): string => {
           name: 'Range',
           frac: r.msToReset ? clamp(r.msToEmpty / r.msToReset, 0, 1) : null,
           tone: r.msToEmpty < 30 * 60 * 1000 ? 'bad' : 'warn',
-          value: `runs out in ${spanText(r.msToEmpty)}, before the reset`,
+          value: `runs out in ${spanText(r.msToEmpty)}`,
         }
   const cells: Row[] = [
     {
