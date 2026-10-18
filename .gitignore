@@ -1,0 +1,4 @@
+# Written by the engine on every load: the editor's type definitions.
+.claude-plugin/types/
+*.log
+.DS_Store

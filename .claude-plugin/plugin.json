@@ -1,0 +1,6 @@
+{
+  "name": "cruscotto",
+  "version": "0.1.0",
+  "description": "Nineties dashboard above the prompt: context, 5-hour and weekly limits, model, tokens per minute, total tokens in millions, and a check-engine lamp.",
+  "types": "./types/index.d.ts"
+}
