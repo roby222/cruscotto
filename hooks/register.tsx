@@ -126,21 +126,28 @@ export const register: Register = (on, options) => {
       />
     ))
     // The gear opens the engine's own settings menu, where this plugin's options live.
-    buttons.push(
+    const settingsButton = (
       <Button
         key="settings"
         label="⚙️ Settings"
         plain
         dimColor
         onPress={() => void $.command.run({ command: 'config' }).catch(() => $.ui.toast('Type /config to change the cruscotto settings'))}
-      />,
+      />
+    )
+    // Actions start where the eye starts, on the left; the utility sits apart on the right.
+    const buttonRow = (
+      <Box flexDirection="row" justifyContent="space-between">
+        <Box flexDirection="row" gap={1}>{buttons}</Box>
+        {settingsButton}
+      </Box>
     )
 
     if (e.surface === 'terminal') {
       return (
         <Box flexDirection="column">
           <Text>{buildLine(snap, now)}</Text>
-          <Box flexDirection="row" justifyContent="flex-end" gap={1}>{buttons}</Box>
+          {buttonRow}
         </Box>
       )
     }
@@ -150,7 +157,7 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column" alignSelf="flex-start">
         <Svg source={buildSvg(snap, now)} alt={buildLine(snap, now)} />
-        <Box flexDirection="row" justifyContent="flex-end" gap={1}>{buttons}</Box>
+        {buttonRow}
       </Box>
     )
   })

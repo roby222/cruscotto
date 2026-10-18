@@ -54,7 +54,7 @@ test('misure e turno finiscono nel quadro', async ($, on) => {
   const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
   const svg = await ui.find({ type: 'Svg' })
   expect(svg).toBeDefined()
-  expect(String((svg as { props: { source: string } }).props.source)).toContain('Weekly Fable')
+  expect(String((svg as { props: { source: string } }).props.source)).toContain('WEEKLY FABLE')
 })
 
 test('i pulsanti inviano il prompt di risolvi101', async ($, on) => {

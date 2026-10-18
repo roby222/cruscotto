@@ -235,21 +235,23 @@ const GLYPHS: Record<LampKey, string> = {
   turbo: '<path d="M8 1L2.5 8H7L6 13L11.5 6H7Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linejoin="round"/>',
 }
 
-/** The lamp row: glyph, count beside it when it has one, a tooltip; returns the markup and the width used. */
+/** Header blocks share one grammar: the value on the top line, a small caps label under it. */
+const LABEL_Y = 28
+const label = (x: number, t: string, color: string, anchor = 'start'): string => text(x, LABEL_Y, t, 7, color, anchor, 600)
+
+const LAMP_PITCH = 32
+
+/** The lamp row: one block per lamp, the glyph over its word, the count as a badge on the glyph's corner, a tooltip. */
 const lampRow = (x: number, y: number, list: Lamp[]): { svg: string; width: number } => {
   let s = ''
-  let cx = x
-  for (const l of list) {
+  list.forEach((l, i) => {
+    const cx = x + i * LAMP_PITCH + LAMP_PITCH / 2
     const color = l.on ? toneColor(l.tone) : skin().lampOff
-    s += `<g transform="translate(${cx} ${y})"><title>${esc(l.title)}</title>${GLYPHS[l.key].replaceAll('COLOR', color)}</g>`
-    cx += 14
-    if (l.on && l.count != null) {
-      s += text(cx + 2, y + 13, String(l.count), 10, color, 'start', 600)
-      cx += 4 + 6 * String(l.count).length
-    }
-    cx += 6
-  }
-  return { svg: s, width: cx - x }
+    s += `<g transform="translate(${f1(cx - 7)} ${y})"><title>${esc(l.title)}</title>${GLYPHS[l.key].replaceAll('COLOR', color)}</g>`
+    if (l.on && l.count != null) s += text(cx + 9, y + 5, String(l.count), 8, color, 'start', 700)
+    s += label(cx, l.word, l.on ? toneColor(l.tone) : skin().muted, 'middle')
+  })
+  return { svg: s, width: list.length * LAMP_PITCH }
 }
 
 /** I motivi che stanno in `max` caratteri, poi il conto di quelli lasciati fuori. */
@@ -276,9 +278,9 @@ export const buildSvg = (snap: Snap, now: number): string => {
   // Griglia 2 x 2: contesto e autonomia sopra, i limiti a due a due sotto.
   const r = range(snap, now)
   // Range is a verdict, not a quantity: one sentence in the header, no bar.
-  const rangeText = r.status === 'measuring' ? ''
-    : r.status === 'lasts' ? `5 h window lasts to the reset, ${r.spare}% spare`
-    : `5 h window runs out in ${spanText(r.msToEmpty)}`
+  const rangeText = r.status === 'measuring' ? 'measuring, needs 5 min of use'
+    : r.status === 'lasts' ? `lasts to the reset, ${r.spare}% spare`
+    : `runs out in ${spanText(r.msToEmpty)}`
   const rangeColor = r.status === 'runsOut' && rangeTone(r) !== 'ok' ? toneColor(rangeTone(r)) : skin().muted
   const cells: Row[] = [
     {
@@ -302,28 +304,33 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const L = 0
   const R = W
   const GAP = 24
-  const COL = (R - L - GAP) / 2
-  const ROW = 28
-  const lines = Math.ceil(cells.length / 2)
-  const H = 32 + lines * ROW
+  // One row of tiles; four windows fall back to two by two, so no tile is ever left alone in a row.
+  const cols = cells.length === 4 ? 2 : Math.min(3, cells.length)
+  const COL = (R - L - GAP * (cols - 1)) / cols
+  const ROW = 36
+  const rows = Math.ceil(cells.length / cols)
+  const H = 42 + rows * ROW
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`
 
-  // Intestazione: fila di spie e frase del range a sinistra; consumo a destra. Il modello lo mostra già il compositore.
+  // Header, left to right by urgency: the lamps, the range verdict, the odometer. Every block is a value over a small caps label.
   let textX = L
   if (settings.lamps) {
-    const row = lampRow(L, 4, lamps(snap, now))
+    const row = lampRow(L, 3, lamps(snap, now))
     s += row.svg
-    textX = L + row.width + 8
+    textX = L + row.width + 10
   }
-  if (rangeText) s += text(textX, 20, rangeText, 12, rangeColor)
-  s += text(R, 20, `${millions(snap.total)} M tokens`, 16, skin().ok, 'end', 600)
+  s += text(textX, 15, rangeText, 12, rangeColor)
+  s += label(textX, 'RANGE', skin().muted)
+  s += text(R, 16, `${millions(snap.total)} M`, 14, skin().ok, 'end', 700)
+  s += label(R, 'TOKENS, ALL SESSIONS', skin().muted, 'end')
 
+  // Tiles share the header's grammar: caps label, value, then the bar.
   const cell = (r: Row, x: number, y: number, w: number) => {
-    s += text(x, y, r.name, 12, skin().muted)
-    s += text(x + w, y, r.value, 12, skin().text, 'end')
-    s += bar(x, y + 7, w, r.frac, r.tone, r.marker)
+    s += text(x, y, r.name.toUpperCase(), 7, skin().muted, 'start', 600)
+    s += text(x, y + 15, r.value, 12, skin().text)
+    s += bar(x, y + 21, w, r.frac, r.tone, r.marker)
   }
-  cells.forEach((r, i) => cell(r, L + (i % 2) * (COL + GAP), 44 + ROW * Math.floor(i / 2), COL))
+  cells.forEach((r, i) => cell(r, L + (i % cols) * (COL + GAP), 46 + ROW * Math.floor(i / cols), COL))
 
   s += `</svg>`
   return s

@@ -18,10 +18,10 @@ The header carries the lamp row, the range sentence and the total tokens
 counted, in millions, kept across sessions.
 
 The range sentence is a verdict, so it has no bar: at the pace of the last
-90 minutes, does the 5-hour window last to its reset? "5 h window lasts to
-the reset, 12% spare" means yes, and little to spare is the ideal, not a
-warning. "5 h window runs out in 1 h 20 min" means no: amber if that is 30
-minutes or more before the reset, red if it is within 30 minutes from now.
+90 minutes, does the 5-hour window last to its reset? "lasts to the reset,
+12% spare" means yes, and little to spare is the ideal, not a warning. "runs
+out in 1 h 20 min" means no: amber if that is 30 minutes or more before the
+reset, red if it is within 30 minutes from now.
 
 The total sums input, output, cache-read and cache-write tokens of every
 turn.
@@ -32,8 +32,8 @@ red at 5%; both thresholds are settings.
 ## Lamps
 
 Like the lamps of a car cluster: one state each, and none for what a bar
-already shows. Off, a lamp is a dim outline; lit, it takes its color, and
-hovering it tells why. Red means stop, amber means attention, green is
+already shows. Each has its word under it; off, the glyph is a dim outline;
+lit, glyph and word take its color, and hovering it tells why. Red means stop, amber means attention, green is
 information.
 
 | Lamp | Glyph | Lights when | Color |

@@ -43,9 +43,9 @@ describe('dash helpers', () => {
     )
     expect(svg.startsWith('<svg')).toBe(true)
     expect(svg.includes('Opus 5.5')).toBe(false) // the composer already names the model
-    expect(svg.includes('Session 5 h')).toBe(true)
+    expect(svg.includes('SESSION 5 H')).toBe(true)
     expect(svg.includes('Range')).toBe(false) // range is a sentence in the header, not a gauge
-    expect(svg.includes('Weekly Fable')).toBe(true)
+    expect(svg.includes('WEEKLY FABLE')).toBe(true)
   })
 
   test('limitLabel', () => {
