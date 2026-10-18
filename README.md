@@ -4,6 +4,8 @@ A quiet instrument strip above the Claude Code prompt, in the spirit of a
 nineties night-lit dashboard: four thin bars, one check-engine lamp, and
 three buttons for the prompts you send most often.
 
+![The strip in the VS Code extension: model, total tokens, the four gauges and the three buttons](docs/band.png)
+
 ## What it shows
 
 | Gauge | Reading |
@@ -68,6 +70,14 @@ whose machine already holds a git credential for github.com (an SSH key, or
 The strip is drawn as SVG on the desktop app and the VS Code extension. On
 the terminal, which has no SVG, it is one line of text with the same values,
 and the buttons draw as `[ label ]`.
+
+## Tested on
+
+macOS (Apple silicon) with the VS Code extension, Claude Code 2.1.301. The
+module runs inside the engine's own sandbox, with no Node and no filesystem
+access of its own, so nothing in it depends on the operating system; the
+desktop app, the terminal, Windows and WSL have not been tried yet. Reports
+are welcome as issues.
 
 ## Development
 
