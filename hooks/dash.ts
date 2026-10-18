@@ -191,15 +191,16 @@ const bar = (x: number, y: number, w: number, frac: number | null, tone: Tone, m
 }
 
 // Sagoma del motore come la spia di avaria ISO: blocco, presa d'aria, scarico, piede; 24 × 18.
-// ISO check-engine silhouette, 26 x 17: tab top-left, exhaust right, shaft left, sump below, hollow middle.
-const ENGINE =
-  'M8 2H12V4H22V7H26V11H22V15H16V17H9V15H6V12H2V8H6V4H8Z' +
-  'M9 7H19V12H9Z'
+// ISO check-engine outline, 26 x 18, drawn as a stroke like the lamp on a real cluster.
+const ENGINE = 'M6 3.5V1.5Q6 1 6.5 1H8.5Q9 1 9 1.5V3.5H18.5Q19 3.5 19 4V6.5Q19 7 19.5 7H23.5Q24 7 24 7.5V10.5Q24 11 23.5 11H20.5Q20 11 20 11.5V14.5Q20 15 19.5 15H14.5Q14 15 14 15.5V16.5Q14 17 13.5 17H8.5Q8 17 8 16.5V15.5Q8 15 7.5 15H5.5Q5 15 5 14.5V11.5Q5 11 4.5 11H2.5Q2 11 2 10.5V8.5Q2 8 2.5 8H4.5Q5 8 5 7.5V4Q5 3.5 5.5 3.5Z'
 
-const engineLamp = (x: number, y: number, tone: Tone): string =>
-  tone === 'ok'
-    ? `<path d="${ENGINE}" transform="translate(${x} ${y})" fill-rule="evenodd" fill="none" stroke="${skin().lampOff}" stroke-width="1.2" stroke-linejoin="miter"/>`
-    : `<path d="${ENGINE}" transform="translate(${x} ${y})" fill-rule="evenodd" fill="${toneColor(tone)}" stroke="none"/>`
+const engineLamp = (x: number, y: number, tone: Tone): string => {
+  const stroke = (color: string, width: number, opacity = 1): string =>
+    `<path d="${ENGINE}" transform="translate(${x} ${y})" fill="none" stroke="${color}" stroke-width="${width}" stroke-opacity="${opacity}" stroke-linejoin="round" stroke-linecap="round"/>`
+  if (tone === 'ok') return stroke(skin().lampOff, 1.6)
+  // lit: a soft halo under the line
+  return stroke(toneColor(tone), 5, 0.25) + stroke(toneColor(tone), 2)
+}
 
 /** I motivi che stanno in `max` caratteri, poi il conto di quelli lasciati fuori. */
 export const fitReasons = (reasons: string[], max: number): string => {
