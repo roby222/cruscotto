@@ -150,18 +150,17 @@ export const register: Register = (on, options) => {
     const settingsButton = (
       <Button
         key="settings"
-        label="Settings"
+        label="⚙ Settings"
         plain
         onPress={() => void $.command.run({ command: 'config' }).catch(() => $.ui.toast('Type /config to change the cruscotto settings'))}
       />
     )
-    // VS Code paints Buttons in its theme colors whatever the props (only key, label and dimColor reach it);
-    // a text link looked like no button at all. What the plugin does own is their place: one cell per
-    // column, so each button starts under a tile's label. The margin goes below the row, not above.
-    // shortcut: cells are quarters, right for four tiles; with five or six rate windows the Svg draws three columns and the buttons no longer line up, revisit if such a plan appears.
-    const grid = (
-      <Box flexDirection="row" marginBottom={1}>
-        {[...buttons, settingsButton].map((b, i) => <Box key={String(i)} width="25%">{b}</Box>)}
+    // VS Code paints Buttons in its theme colors whatever the props (only key, label and dimColor reach
+    // it). The row is one compact group at the right edge, the gear last; the margin goes below it.
+    const buttonRow = (
+      <Box flexDirection="row" justifyContent="flex-end" gap={1} marginBottom={1}>
+        {buttons}
+        {settingsButton}
       </Box>
     )
 
@@ -169,10 +168,7 @@ export const register: Register = (on, options) => {
       return (
         <Box flexDirection="column">
           <Text>{buildLine(snap, now)}</Text>
-          <Box flexDirection="row" justifyContent="space-between" marginBottom={1}>
-            <Box flexDirection="row" gap={3}>{buttons}</Box>
-            {settingsButton}
-          </Box>
+          {buttonRow}
         </Box>
       )
     }
@@ -182,7 +178,7 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column" alignSelf="flex-start">
         <Svg source={buildSvg(snap, now)} alt={buildLine(snap, now)} />
-        {grid}
+        {buttonRow}
       </Box>
     )
   })

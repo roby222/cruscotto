@@ -301,7 +301,7 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const R = W - GAP
   // Up to four tiles on a row; five or six go three by three, so no row holds one tile alone.
   const cols = cells.length <= 4 ? cells.length : 3
-  // Columns are exact fractions of W, so the host's button cells (width 100/cols %) start where the tiles do.
+  // Columns are exact fractions of W; every tile ends one GAP before the next column starts.
   const COL = W / cols
   const ROW = 60
   const rows = Math.ceil(cells.length / cols)
