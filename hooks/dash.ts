@@ -270,7 +270,8 @@ const vuMeter = (x: number, y: number, snap: Snap, now: number, working: boolean
   const rate = ratePerMin(snap.samples, now)
   const lit = vuLit(rate)
   const peak = Math.max(...[0, 5, 10, 15, 20].map(sec => vuLit(ratePerMin(snap.samples, now - sec * 1000))))
-  const color = (i: number) => (i < 7 ? skin().ok : i < 9 ? skin().warn ?? AMBER : skin().bad ?? RED)
+  // A throughput meter, not an alarm: the strip's amber and red mean attention and stop, and a fast turn is neither.
+  const color = (i: number) => (i < 8 ? skin().ok : skin().text)
   let s = `<g><title>${esc(compactTokens(rate))} fresh tokens/min over the last 5 minutes; full scale ${esc(compactTokens(VU_FULL))}</title>`
   for (let i = 0; i < VU_SEGMENTS; i++) {
     const sx = x + i * 8
