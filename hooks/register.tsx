@@ -40,7 +40,7 @@ export const register: Register = (on, options) => {
 
   on('prompt.submit', async ($, e, next) => {
     tools = 0
-    await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0 }))
+    await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0, measures: 0, measureTrail: [] }))
     if (buttonsFile) extra = parseButtons(await $.fs.read(buttonsFile).catch(() => ''))
 
     return next(e)
@@ -69,6 +69,8 @@ export const register: Register = (on, options) => {
       return {
       ...s,
       samples: grown > 0 ? pushSample(s.samples, { t: now, tokens: grown, live: true }) : s.samples,
+      measures: (s.measures ?? 0) + 1,
+      measureTrail: [...(s.measureTrail ?? []), e.context.tokens ?? -1].slice(-12),
       live: grown > 0 ? (s.live ?? 0) + grown : s.live ?? 0,
       ctxPct: e.context.percent ?? s.ctxPct,
       ctxTokens: e.context.tokens ?? s.ctxTokens,

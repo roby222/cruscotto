@@ -21,6 +21,9 @@ export type Snap = {
   turns: number[]
   /** Context growth of the turn in progress, the spectrum's live column; 0 between turns. */
   live: number
+  /** How many session.measure events arrived during the current or last turn, and the context tokens they carried: /cruscotto shows them, to see how often the engine measures. */
+  measures: number
+  measureTrail: number[]
   samples: Sample[]
   /** Le letture della finestra 5 h nell'ultima ora e mezza, per l'autonomia. */
   burn: Reading[]
