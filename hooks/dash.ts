@@ -12,6 +12,7 @@ export const INITIAL: Snap = {
   limits: [],
   usd: null,
   trip: 0,
+  turns: [],
   samples: [],
   burn: [],
   cacheHit: null,
@@ -246,6 +247,44 @@ const lampRow = (x: number, y: number, list: Lamp[]): { svg: string; width: numb
   return { svg: s, width: list.length * LAMP_PITCH }
 }
 
+/** Full scale of the rate meter, tokens per minute. */
+export const VU_FULL = 200_000
+const VU_SEGMENTS = 10
+
+/** Segments lit for a rate: 0 to VU_SEGMENTS. */
+export const vuLit = (rate: number): number => Math.min(VU_SEGMENTS, Math.round((rate / VU_FULL) * VU_SEGMENTS))
+
+/** A VU meter of the 5-minute token rate: ten segments, green then amber then red, and a peak-hold outline from the last 20 s. */
+const vuMeter = (x: number, y: number, snap: Snap, now: number): string => {
+  const rate = ratePerMin(snap.samples, now)
+  const lit = vuLit(rate)
+  const peak = Math.max(...[0, 5, 10, 15, 20].map(sec => vuLit(ratePerMin(snap.samples, now - sec * 1000))))
+  const color = (i: number) => (i < 7 ? skin().ok : i < 9 ? skin().warn ?? AMBER : skin().bad ?? RED)
+  let s = `<g><title>${esc(compactTokens(rate))} tokens/min over the last 5 minutes; full scale ${esc(compactTokens(VU_FULL))}</title>`
+  for (let i = 0; i < VU_SEGMENTS; i++) {
+    const sx = x + i * 8
+    if (i < lit) s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${color(i)}"/>`
+    else if (i === peak - 1) s += `<rect x="${sx + 0.5}" y="${y + 0.5}" width="5" height="11" rx="1" fill="none" stroke="${color(i)}" stroke-width="1"/>`
+    else s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${skin().track}"/>`
+  }
+  return s + '</g>'
+}
+const VU_W = VU_SEGMENTS * 8 - 2
+
+/** A spectrum of the last eight turns: one column each, as tall as its tokens against the heaviest of the eight. */
+const spectrum = (x: number, y: number, turns: number[]): string => {
+  const last = turns.slice(-8)
+  const top = Math.max(1, ...last)
+  const words = last.length ? last.map(t => compactTokens(t)).join(', ') : 'none yet'
+  let s = `<g><title>Tokens of the last ${last.length || 8} turns, oldest first: ${esc(words)}</title>`
+  for (let i = 0; i < 8; i++) {
+    const t = last[i - (8 - last.length)]
+    const h = t == null ? 1 : Math.max(1, Math.round((t / top) * 12))
+    s += `<rect x="${x + i * 7}" y="${y + 12 - h}" width="5" height="${h}" rx="1" fill="${t == null ? skin().track : skin().ok}"/>`
+  }
+  return s + '</g>'
+}
+
 type Row = { name: string; frac: number | null; tone: Tone; value: string; caption: string; marker?: number | null }
 
 export const buildSvg = (snap: Snap, now: number): string => {
@@ -291,11 +330,11 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const COL = W / cols
   const ROW = 60
   const rows = Math.ceil(cells.length / cols)
-  // The tiles, then the odometer as a footnote on the right; the lamps live in their own Svg (buildLampsSvg),
-  // drawn by the host on the buttons' row, so the strip's bottom row is lamps left, buttons right.
+  // The tiles, then a meter row: the rate VU meter and the spectrum of the last turns on the left, the
+  // counters on the right. The lamps live in their own Svg (buildLampsSvg), drawn by the host on the buttons' row.
   const FOOT = 8 + rows * ROW
   // The image ends where the last tile does (R), so tiles, odometer and the host's button row share one right edge.
-  const H = FOOT + 16
+  const H = FOOT + 30
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${R} ${H}" width="${R}" height="${H}">`
 
   // Tiles: label on the row's top baseline, the live value 22 below, the caption 36 below, the bar at 44.
@@ -307,9 +346,15 @@ export const buildSvg = (snap: Snap, now: number): string => {
   }
   cells.forEach((c, i) => cell(c, L + (i % cols) * COL, 8 + ROW * Math.floor(i / cols), COL - GAP))
 
+  // Meters share the tiles' grammar: small caps label on the row's baseline, the instrument under it.
+  s += text(L, FOOT + 6, 'RATE', 7, skin().muted, 'start', 600)
+  s += vuMeter(L, FOOT + 10, snap, now)
+  s += text(L + VU_W + GAP, FOOT + 6, 'LAST TURNS', 7, skin().muted, 'start', 600)
+  s += spectrum(L + VU_W + GAP, FOOT + 10, snap.turns)
+
   // One text run anchored at the right edge, so nothing can overlap: this session's tokens, then what they
-  // would have cost on an API key, two labelled values in one color.
-  s += `<text x="${R}" y="${FOOT + 8}" text-anchor="end" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
+  // would have cost on an API key, two labelled values in one color, on the meters' bottom line.
+  s += `<text x="${R}" y="${FOOT + 21}" text-anchor="end" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
     + `<title>Tokens of this session, and their value at API prices (nothing is billed on a subscription plan)</title>`
     + `<tspan font-size="7" font-weight="600" fill="${skin().muted}">TOKENS  </tspan>`
     + `<tspan font-size="11" font-weight="700" fill="${skin().text}">${esc(millions(snap.trip))} M</tspan>`

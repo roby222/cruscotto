@@ -19,8 +19,8 @@ export const register: Register = (on, options) => {
     await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0, agents: [] }))
     await $.command.register({ name: 'cruscotto', description: 'Raw cruscotto readings, to compare with the Usage panel' })
     if (buttonsFile) extra = parseButtons(await $.fs.read(buttonsFile).catch(() => ''))
-    // "resets in" and the range move with the clock, not with a state write.
-    $.clock.every(15_000, () => $.ui.invalidate('ui.render'))
+    // "resets in", the range and the rate meter move with the clock, not with a state write; 5 s keeps the meter alive.
+    $.clock.every(5_000, () => $.ui.invalidate('ui.render'))
 
     return next(e)
   })
@@ -109,6 +109,7 @@ export const register: Register = (on, options) => {
         ...s,
         model: e.usage?.model ?? s.model,
         trip: s.trip + used,
+        turns: used > 0 ? [...s.turns, used].slice(-8) : s.turns,
         samples,
         cacheHit: e.usage && input > 0 ? e.usage.cache_read_input_tokens / input : s.cacheHit,
         lastSeconds: Math.round(e.durationMs / 1000),

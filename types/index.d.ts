@@ -16,6 +16,8 @@ export type Snap = {
   usd: number | null
   /** Tokens of this session, every turn and subagent turn summed. */
   trip: number
+  /** Tokens of the last eight turns of the main loop, oldest first, for the spectrum. */
+  turns: number[]
   samples: Sample[]
   /** Le letture della finestra 5 h nell'ultima ora e mezza, per l'autonomia. */
   burn: Reading[]

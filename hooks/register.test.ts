@@ -50,6 +50,7 @@ test('misure e turno finiscono nel quadro', async ($, on) => {
   const svg = await ui.find({ type: 'Svg' })
   expect(svg).toBeDefined()
   expect(String((svg as { props: { source: string } }).props.source)).toContain('WEEKLY FABLE')
+  expect(String((svg as { props: { source: string } }).props.source)).toContain('oldest first: 1 k') // the turn's 1000 tokens, one column
 })
 
 test('i pulsanti inviano il prompt di risolvi101', async ($, on) => {

@@ -16,6 +16,8 @@ const snap = {
   // a few lamps lit, to show them: cold cache, two tools and one agent running
   cacheHit: 0.3, toolsRunning: 2, agents: ['a1'],
   usd: 12.4,
+  samples: [{ t: now - 120_000, tokens: 260_000 }, { t: now - 30_000, tokens: 200_000 }],
+  turns: [12_000, 48_000, 31_000, 5_000, 90_000, 64_000, 22_000, 70_000],
 }
 const BG: Record<string, string> = { night: '#1b1c1e', amber: '#1a1408', paper: '#f4f2ec', mono: '#1b1c1e' }
 for (const skin of Object.keys(SKINS)) {

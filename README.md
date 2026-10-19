@@ -13,12 +13,15 @@ often. Flat, sans, no chrome, readable at a glance.
 | Context | How full the context window is, with a tick at the auto-compaction threshold |
 | Session 5 h | Share of the 5-hour rate-limit window left, and when it resets |
 | Weekly | Share of the 7-day window left, and when it resets; any other window the API reports gets its own bar |
+| Rate | A ten-segment VU meter of the token rate over the last 5 minutes, green up to 140 k/min, amber to 180 k, red at the 200 k full scale; the outlined segment is the peak of the last 20 s |
+| Last turns | A spectrum of the last eight turns, one column each, as tall as its tokens against the heaviest of the eight |
 
 Every tile has the same grammar: a small caps label, one large number that
 is the live part, a short caption, and the bar where there is a quantity.
-Under the tiles, on the right, two counters: this session's tokens, in
-millions, and what they would have cost at API prices (nothing is billed on
-a Pro or Max plan). The bottom row has the lamps on the left and
+Under the tiles, the meter row: the rate meter and the spectrum on the
+left, two counters on the right: this session's tokens, in millions, and
+what they would have cost at API prices (nothing is billed on a Pro or Max
+plan). Hovering a meter gives its numbers. The bottom row has the lamps on the left and
 the buttons as one group on the right, the gear last.
 
 The Range tile is a verdict, so it has no bar: at the pace of the last 90
