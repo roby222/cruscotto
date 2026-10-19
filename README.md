@@ -4,7 +4,7 @@ A quiet instrument strip above the Claude Code prompt: four tiles with one
 live number each, five lamps, and buttons for the prompts you send most
 often. Flat, sans, no chrome, readable at a glance.
 
-![The strip: four tiles, Context, Session 5 h, Range and Weekly, the odometer under them, and the lamp row at the bottom left](docs/skin-night.svg)
+![The strip: four tiles, Context, Session 5 h, Range and Weekly, the session's tokens and API value under them, and the lamp row at the bottom left](docs/skin-night.svg)
 
 ## What it shows
 
@@ -16,10 +16,9 @@ often. Flat, sans, no chrome, readable at a glance.
 
 Every tile has the same grammar: a small caps label, one large number that
 is the live part, a short caption, and the bar where there is a quantity.
-Under the tiles, on the right, the odometer: the total tokens counted, in
-millions, kept across sessions, and beside it in green what they would have
-cost at API prices, a counter that only goes up (nothing is billed on a Pro
-or Max plan). The bottom row has the lamps on the left and
+Under the tiles, on the right, the odometer: this session's tokens, in
+millions, and beside it in green what they would have cost at API prices
+(nothing is billed on a Pro or Max plan). The bottom row has the lamps on the left and
 the buttons as one group on the right, the gear last.
 
 The Range tile is a verdict, so it has no bar: at the pace of the last 90
@@ -28,8 +27,8 @@ reset" means yes, and little to spare is the ideal, not a warning. "1 h 20
 min, runs out before reset" means no: amber if that is 30 minutes or more
 before the reset, red if it is within 30 minutes from now.
 
-The total sums input, output, cache-read and cache-write tokens of every
-turn.
+The token count sums input, output, cache-read and cache-write tokens of
+every turn of the session, subagents included.
 
 The bars turn amber at 20% left, or within 20 points of compaction, and
 red at 5%; both thresholds are settings.

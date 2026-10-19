@@ -11,8 +11,6 @@ export const INITIAL: Snap = {
   compactPct: null,
   limits: [],
   usd: null,
-  usdBase: 0,
-  total: 0,
   trip: 0,
   samples: [],
   burn: [],
@@ -315,12 +313,12 @@ export const buildSvg = (snap: Snap, now: number): string => {
   }
   cells.forEach((c, i) => cell(c, L + (i % cols) * COL, 8 + ROW * Math.floor(i / cols), COL - GAP))
 
-  // One text run anchored at the right edge, so nothing can overlap: the tokens of every session, then what
-  // they would have cost on an API key, in the ok color, a counter that only ever goes up.
+  // One text run anchored at the right edge, so nothing can overlap: this session's tokens, then what they
+  // would have cost on an API key, in the ok color.
   s += `<text x="${R}" y="${FOOT + 6}" text-anchor="end" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
-    + `<title>Tokens of every session, and their value at API prices (nothing is billed on a subscription plan)</title>`
-    + `<tspan font-size="7" font-weight="600" fill="${skin().muted}">TOKENS, ALL SESSIONS  </tspan>`
-    + `<tspan font-size="11" font-weight="700" fill="${skin().text}">${esc(millions(snap.total))} M</tspan>`
+    + `<title>Tokens of this session, and their value at API prices (nothing is billed on a subscription plan)</title>`
+    + `<tspan font-size="7" font-weight="600" fill="${skin().muted}">TOKENS, THIS SESSION  </tspan>`
+    + `<tspan font-size="11" font-weight="700" fill="${skin().text}">${esc(millions(snap.trip))} M</tspan>`
     + `<tspan font-size="11" font-weight="700" fill="${skin().ok}">  ${esc(usdAll(snap))}</tspan></text>`
 
   s += `</svg>`
@@ -337,8 +335,8 @@ export const LAMPS_SHARE = `${Math.round((LAMPS_W / STRIP_W) * 100)}%`
 export const buildLampsSvg = (snap: Snap, now: number): string =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${LAMPS_W} 36">${lampRow(0, 2, lamps(snap, now)).svg}</svg>`
 
-/** The API-price value of every session, this one included, as a dollar figure. */
-export const usdAll = (snap: Snap): string => `$${(snap.usdBase + (snap.usd ?? 0)).toFixed(2)}`
+/** This session's API-price value as a dollar figure. */
+export const usdAll = (snap: Snap): string => `$${(snap.usd ?? 0).toFixed(2)}`
 
 /** Riga di testo per la superficie senza Svg. */
 export const buildLine = (snap: Snap, now: number): string => {
@@ -348,7 +346,7 @@ export const buildLine = (snap: Snap, now: number): string => {
   const { reasons } = lamp(snap, now)
   const lit = settings.lamps ? lampWords(lamps(snap, now)) : []
   const warn = [...lit, ...reasons].length ? ` | ${[...lit, ...reasons].join(', ')}` : ''
-  return `${compactTokens(rate)} tok/min | ctx ${ctx}${limits ? ' | ' + limits : ''} | total ${millions(snap.total)}M ${usdAll(snap)}${warn}`
+  return `${compactTokens(rate)} tok/min | ctx ${ctx}${limits ? ' | ' + limits : ''} | session ${millions(snap.trip)}M ${usdAll(snap)}${warn}`
 }
 
 /** Le letture grezze, per confrontarle col pannello Usage. */
@@ -357,9 +355,9 @@ export const buildReport = (snap: Snap, now: number): string => {
     `model: ${snap.model || '(no turn yet)'}`,
     `context: ${snap.ctxPct ?? '--'}% (${snap.ctxTokens ?? '--'} of ${snap.ctxWindow ?? '--'} tokens), compaction at ${snap.compactPct != null ? Math.round(snap.compactPct) + '%' : '--'}`,
     ...snap.limits.map(l => `${l.kind}: used ${l.pct}%, left ${Math.round(leftOf(l))}%, resets in ${untilReset(l.resetsAt, now)} (${l.resetsAt ?? '--'})`),
-    `tokens: ${snap.total} (${millions(snap.total)} M), this session ${snap.trip}`,
+    `tokens this session: ${snap.trip} (${millions(snap.trip)} M)`,
     `rate: ${Math.round(ratePerMin(snap.samples, now))} tokens/min over the last 5 minutes`,
-    `cost: ${snap.usd != null ? '$' + snap.usd.toFixed(4) : '--'} this session, ${usdAll(snap)} all sessions at API prices, cache ${snap.cacheHit != null ? Math.round(snap.cacheHit * 100) + '%' : '--'}`,
+    `cost this session at API prices: ${snap.usd != null ? '$' + snap.usd.toFixed(4) : '--'}, cache ${snap.cacheHit != null ? Math.round(snap.cacheHit * 100) + '%' : '--'}`,
     `last turn: ${snap.lastSeconds ?? '--'} s, ${snap.lastTools} tools${snap.hasError ? ', ended in error' : ''}`,
     `lamps: ${lampWords(lamps(snap, now)).join(', ') || 'none lit'}; running now ${snap.toolsRunning} tools, ${snap.agents.length} agents`,
   ]

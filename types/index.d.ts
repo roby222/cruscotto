@@ -14,9 +14,7 @@ export type Snap = {
   compactPct: number | null
   limits: Limit[]
   usd: number | null
-  /** API-price value of the earlier sessions, from the store; the odometer shows usdBase + usd. */
-  usdBase: number
-  total: number
+  /** Tokens of this session, every turn and subagent turn summed. */
   trip: number
   samples: Sample[]
   /** Le letture della finestra 5 h nell'ultima ora e mezza, per l'autonomia. */

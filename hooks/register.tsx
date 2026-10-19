@@ -16,9 +16,7 @@ export const register: Register = (on, options) => {
   const buttonsFile = typeof options.buttonsFile === 'string' ? options.buttonsFile : ''
 
   on('session.start', async ($, e, next) => {
-    const stored = Number((await $.store.get('totalTokens')) ?? 0)
-    const usdStored = Number((await $.store.get('totalUsd')) ?? 0)
-    await update($, snapAtom, (s: Snap) => ({ ...s, total: Number.isFinite(stored) ? stored : 0, usdBase: Number.isFinite(usdStored) ? usdStored : 0, toolsRunning: 0, agents: [] }))
+    await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0, agents: [] }))
     await $.command.register({ name: 'cruscotto', description: 'Raw cruscotto readings, to compare with the Usage panel' })
     if (buttonsFile) extra = parseButtons(await $.fs.read(buttonsFile).catch(() => ''))
     // "resets in", the range and the turbo lamp move with the clock, not with a state write.
@@ -84,12 +82,7 @@ export const register: Register = (on, options) => {
     // A subagent's turn: it leaves the AGENTS lamp and its tokens count, nothing else is the person's turn.
     if (e.agentId) {
       const id = e.agentId
-      let total = 0
-      await update($, snapAtom, (s: Snap) => {
-        total = s.total + used
-        return { ...s, total, trip: s.trip + used, samples: used > 0 ? pushSample(s.samples, { t: now, tokens: used }) : s.samples, agents: s.agents.filter(a => a !== id) }
-      })
-      if (used > 0) await $.store.set('totalTokens', total)
+      await update($, snapAtom, (s: Snap) => ({ ...s, trip: s.trip + used, samples: used > 0 ? pushSample(s.samples, { t: now, tokens: used }) : s.samples, agents: s.agents.filter(a => a !== id) }))
 
       return next(e)
     }
@@ -109,15 +102,12 @@ export const register: Register = (on, options) => {
       compactPct = null
     }
 
-    let total = 0
     await update($, snapAtom, (s: Snap) => {
-      total = s.total + used
       const samples = used > 0 ? pushSample(s.samples, { t: now, tokens: used }) : s.samples
 
       return {
         ...s,
         model: e.usage?.model ?? s.model,
-        total,
         trip: s.trip + used,
         samples,
         cacheHit: e.usage && input > 0 ? e.usage.cache_read_input_tokens / input : s.cacheHit,
@@ -127,12 +117,6 @@ export const register: Register = (on, options) => {
         compactPct: compactPct ?? s.compactPct,
       }
     })
-
-    if (used > 0) {
-      await $.store.set('totalTokens', total)
-      const snap = await read($, snapAtom)
-      if (snap.usd != null) await $.store.set('totalUsd', snap.usdBase + snap.usd)
-    }
 
     return next(e)
   })

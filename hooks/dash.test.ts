@@ -38,7 +38,7 @@ describe('dash helpers', () => {
 
   test('buildSvg produce un svg con i valori', () => {
     const svg = buildSvg(
-      { ...INITIAL, total: 2_500_000, model: 'claude-opus-5-5', ctxPct: 42, limits: [{ kind: 'five_hour', pct: 30 }, { kind: 'seven_day', pct: 10 }, { kind: 'seven_day_fable', pct: 35 }] },
+      { ...INITIAL, trip: 2_500_000, model: 'claude-opus-5-5', ctxPct: 42, limits: [{ kind: 'five_hour', pct: 30 }, { kind: 'seven_day', pct: 10 }, { kind: 'seven_day_fable', pct: 35 }] },
       0,
     )
     expect(svg.startsWith('<svg')).toBe(true)
@@ -122,8 +122,8 @@ describe('dash helpers', () => {
     Object.assign(settings, { coldCacheBelow: 10 })
     expect(lampWords(lamps(busy, now))).toEqual(['FAILED', 'TOOLS 3', 'AGENTS 1'])
     Object.assign(settings, { coldCacheBelow: 50 })
-    // the odometer adds this session's API value to the earlier sessions'
-    expect(buildSvg({ ...busy, usdBase: 10.25 }, now).includes('$22.25')).toBe(true)
+    // the odometer shows this session's API value
+    expect(buildSvg(busy, now).includes('$12.00')).toBe(true)
     // turbo from the 5-minute rate
     const fast = { ...quiet, samples: [{ t: now - 60_000, tokens: 600_000 }, { t: now, tokens: 600_000 }] } // 1.2 M in 5 min = 240 k/min
     expect(lampWords(lamps(fast, now))).toEqual(['TURBO'])

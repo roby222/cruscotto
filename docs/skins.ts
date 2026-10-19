@@ -6,7 +6,7 @@ const h = 3_600_000
 const now = 10 * h
 const snap = {
   ...INITIAL,
-  model: 'claude-fable-5-1', total: 5_878_000,
+  model: 'claude-fable-5-1', trip: 5_878_000,
   ctxPct: 21, ctxTokens: 212_000, ctxWindow: 1_000_000, compactPct: 95,
   limits: [
     { kind: 'five_hour', pct: 56, resetsAt: new Date(now + 2 * h + 18 * 60_000).toISOString() },
@@ -15,7 +15,7 @@ const snap = {
   burn: [{ t: now - h, pct: 44 }, { t: now, pct: 56 }],
   // a few lamps lit, to show them: cold cache, two tools and one agent running
   cacheHit: 0.3, toolsRunning: 2, agents: ['a1'],
-  usd: 1.2, usdBase: 11.2,
+  usd: 12.4,
 }
 const BG: Record<string, string> = { night: '#1b1c1e', amber: '#1a1408', paper: '#f4f2ec', mono: '#1b1c1e' }
 for (const skin of Object.keys(SKINS)) {

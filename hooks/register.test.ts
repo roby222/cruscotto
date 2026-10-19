@@ -4,13 +4,9 @@ import { expect, mock, test } from 'claude-code/testing'
 
 const PROPS = { hasSurvey: false, isWorking: false, maxRows: 20, bodyColumns: 120 } as never
 
-const world = (on: On, saved: unknown[] = []) => {
+const world = (on: On) => {
   mock.clock(on, { now: 1_000_000 })
   on('store.get', () => ({ value: undefined }))
-  on('store.set', (_$, e) => {
-    saved.push((e as { value: unknown }).value)
-    return { value: (e as { value: unknown }).value }
-  })
   on('session.measure', (_$, e) => ({ changed: e.changed }))
   on('command.register', () => ({}))
   on('turn.start', (_$, e) => ({ turnId: e.turnId }))
@@ -21,8 +17,7 @@ const world = (on: On, saved: unknown[] = []) => {
 }
 
 test('misure e turno finiscono nel quadro', async ($, on) => {
-  const saved: unknown[] = []
-  world(on, saved)
+  world(on)
 
   await $.session.measure({
     context: { window: 200000, tokens: 50000, percent: 25 },
@@ -50,7 +45,6 @@ test('misure e turno finiscono nel quadro', async ($, on) => {
     },
   } as never)
 
-  expect(saved).toEqual([1000, 1.5]) // tokens, then the API value for the odometer
 
   const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
   const svg = await ui.find({ type: 'Svg' })
@@ -79,8 +73,7 @@ test('il terminale riceve una riga di testo', async ($, on) => {
 })
 
 test('un subagente accende AGENTS e non tocca il turno della persona', async ($, on) => {
-  const saved: unknown[] = []
-  world(on, saved)
+  world(on)
 
   await $.turn.start({ turnId: 'a-1', agentId: 'agent-1' } as never)
   let ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
@@ -94,5 +87,4 @@ test('un subagente accende AGENTS e non tocca il turno della persona', async ($,
   const line = String(((await ui.find({ type: 'Text', text: /tok\/min/ })) as { props: { children: unknown } }).props.children)
   expect(line.includes('AGENTS')).toBe(false)
   expect(line.includes('FAILED')).toBe(false) // the subagent's error is not the person's turn failing
-  expect(saved).toEqual([30]) // but its tokens count
 })
