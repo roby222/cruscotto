@@ -144,7 +144,7 @@ export const register: Register = (on, options) => {
         key={a.key}
         label={a.label}
         hotkey={a.hotkey || undefined}
-        variant="secondary"
+        plain
         onPress={() => void $.prompt.submit({ text: a.text, asUser: true })}
       />
     ))
@@ -158,9 +158,10 @@ export const register: Register = (on, options) => {
       />
     )
     // Actions start where the eye starts, on the left; the utility sits apart on the right.
+    // Plain buttons read as labels in the strip's own register, not as the host theme's grey pills; the margins give the row air.
     const buttonRow = (
-      <Box flexDirection="row" justifyContent="space-between">
-        <Box flexDirection="row" gap={1}>{buttons}</Box>
+      <Box flexDirection="row" justifyContent="space-between" marginTop={1} marginBottom={1} paddingX={1}>
+        <Box flexDirection="row" gap={3}>{buttons}</Box>
         {settingsButton}
       </Box>
     )
