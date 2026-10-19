@@ -21,7 +21,7 @@ buttons.
 |---|---|
 | Context | How full the context window is; the tick is the auto-compaction threshold |
 | Session 5 h | Share of the 5-hour window left, and when it resets |
-| Range | At the pace of the last 90 minutes, does the 5-hour window last to its reset? A verdict: little to spare is the ideal, amber or red only when it runs out early |
+| Range | At the pace of the last 90 minutes, does the 5-hour window last to its reset? A verdict: "16% spare" is the ideal; "10 min, empty, then 3 h 56 min wait" is the time to empty and the lockout that follows, amber, or red when empty within 30 minutes |
 | Weekly | Share of the 7-day window left, and when it resets |
 
 Quota bars turn amber at 20% left and red at 5%, both settings; Context

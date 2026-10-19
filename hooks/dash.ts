@@ -311,7 +311,11 @@ export const buildSvg = (snap: Snap, now: number, working = false): string => {
     ? { name: 'Range', frac: null, tone: 'ok', value: 'n/a', caption: 'measuring, 5 min of use' }
     : r.status === 'lasts'
       ? { name: 'Range', frac: null, tone: 'ok', value: `${r.spare}% spare`, caption: 'lasts to the reset' }
-      : { name: 'Range', frac: null, tone: rangeTone(r), value: spanText(r.msToEmpty), caption: 'runs out before reset' }
+      : {
+        name: 'Range', frac: null, tone: rangeTone(r), value: spanText(r.msToEmpty),
+        // The number is the time to empty; the caption says what that costs: the wait for the reset after it.
+        caption: r.msToReset != null ? `empty, then ${spanText(r.msToReset - r.msToEmpty)} wait` : 'runs out before reset',
+      }
   const limits: Row[] = snap.limits.map((l): Row => {
     const left = leftOf(l)
     return { name: limitLabel(l.kind), frac: left / 100, tone: leftTone(left), value: `${Math.round(left)}% left`, caption: untilReset(l.resetsAt, now) === 'now' ? 'resets now' : `resets in ${untilReset(l.resetsAt, now)}` }
