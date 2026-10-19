@@ -8,6 +8,8 @@ const world = (on: On) => {
   mock.clock(on, { now: 1_000_000 })
   on('store.get', () => ({ value: undefined }))
   on('session.measure', (_$, e) => ({ changed: e.changed }))
+  // Nothing below cruscotto draws: the engine's own empty band, as in a session with no other mod.
+  on('ui.render', () => ({ type: 'engine', ref: 0 }))
   on('command.register', () => ({}))
   on('turn.start', (_$, e) => ({ turnId: e.turnId }))
   on('turn.complete', (_$, e) => ({ text: e.answer }))
@@ -87,4 +89,23 @@ test('un subagente accende AGENTS e non tocca il turno della persona', async ($,
   const line = String(((await ui.find({ type: 'Text', text: /tok\/min/ })) as { props: { children: unknown } }).props.children)
   expect(line.includes('AGENTS')).toBe(false)
   expect(line.includes('FAILED')).toBe(false) // the subagent's error is not the person's turn failing
+})
+
+// A second mod that draws in the band.
+const other = {
+  name: 'other',
+  register(on: On) {
+    on('ui.render', { component: 'AbovePrompt' }, async ($, e) => {
+      const { Text } = $.ui.resolve(e)
+      return <Text>another mod</Text>
+    })
+  },
+}
+
+test('cede la banda a chi ha qualcosa da mostrare', { plugins: [other] }, async ($, on) => {
+  world(on)
+
+  const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
+  expect(await ui.find({ type: 'Text', text: /another mod/ })).toBeDefined()
+  expect(await ui.find({ type: 'Svg' })).toBeUndefined()
 })

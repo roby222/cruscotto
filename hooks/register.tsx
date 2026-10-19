@@ -143,11 +143,12 @@ export const register: Register = (on, options) => {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    // Mods below in the chain draw first: whoever has something to show gets the band, and cruscotto
+    // takes it back when they are done. With nothing below, next(e) is the engine's own empty band.
+    const below = await next(e)
+    const theirs = (below as { type?: string } | null)?.type !== 'engine'
     const snap = await read($, snapAtom)
-
-    if (e.props.hasSurvey || snap.isHidden) {
-      return next(e)
-    }
+    if (theirs || e.props.hasSurvey || snap.isHidden) return below
 
     const now = await $.clock.now()
     const { Box, Button, Text } = $.ui.resolve(e)

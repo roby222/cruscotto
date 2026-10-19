@@ -41,7 +41,8 @@ colors itself from its compaction tick, drawn once the engine has reported it.
 | Agents | subagents are running, with their count |
 
 `/cruscotto` prints the raw readings. The strip is an image, so hovering
-shows nothing.
+shows nothing. The band is shared: when another mod has something to show
+there, cruscotto steps aside and comes back when it is done.
 
 ## Buttons
 
