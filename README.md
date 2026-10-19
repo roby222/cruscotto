@@ -62,11 +62,9 @@ Each one submits a prompt as your own words:
 - **Hurry up**: speed up, parallelize, say why it is slow
   and how long is left.
 
-In VS Code and the desktop app they draw as text links under the strip, in
-your theme's link color: the host paints every real button in its own filled
-style, which clashes with the skins. On the terminal they are buttons, and
-with the strip focused the hotkeys are `g`, `c` and `h`. The texts live in
-`hooks/actions.ts`.
+VS Code and the desktop app draw them in your editor theme's button colors;
+the plugin cannot change that. With the strip focused, the hotkeys are `g`,
+`c` and `h`. The texts live in `hooks/actions.ts`.
 
 ### Your own buttons
 
@@ -146,7 +144,7 @@ whose machine already holds a git credential for github.com (an SSH key, or
 
 The strip is drawn as SVG on the desktop app and the VS Code extension. On
 the terminal, which has no SVG, it is one line of text with the same values,
-and the actions draw as `[ label ]` buttons.
+and the buttons draw as `[ label ]`.
 
 ## Tested on
 

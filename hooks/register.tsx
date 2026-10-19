@@ -142,48 +142,44 @@ export const register: Register = (on, options) => {
     }
 
     const now = await $.clock.now()
-    const { Box, Button, Markdown, Text } = $.ui.resolve(e)
-    const actions = [...(options.buttons === false ? [] : ACTIONS), ...extra]
-    const openSettings = () =>
-      void $.command.run({ command: 'config' }).catch(() => $.ui.toast('Type /config to change the cruscotto settings'))
+    const { Box, Button, Text } = $.ui.resolve(e)
+    const buttons = [...(options.buttons === false ? [] : ACTIONS), ...extra].map(a => (
+      <Button key={a.key} label={a.label} hotkey={a.hotkey || undefined} plain onPress={() => void $.prompt.submit({ text: a.text, asUser: true })} />
+    ))
+    // The gear opens the engine's own settings menu, where this plugin's options live.
+    const settingsButton = (
+      <Button
+        key="settings"
+        label="Settings"
+        plain
+        onPress={() => void $.command.run({ command: 'config' }).catch(() => $.ui.toast('Type /config to change the cruscotto settings'))}
+      />
+    )
+    // One more grid row under the tiles: no side padding, so the first button shares the tiles' left
+    // edge and Settings the odometer's right edge. VS Code paints Buttons in its theme colors whatever
+    // the props (only key, label and dimColor reach it); a text link looked like no button at all.
+    const buttonRow = (
+      <Box flexDirection="row" justifyContent="space-between" marginTop={1}>
+        <Box flexDirection="row" gap={3}>{buttons}</Box>
+        {settingsButton}
+      </Box>
+    )
 
     if (e.surface === 'terminal') {
-      const buttons = actions.map(a => (
-        <Button key={a.key} label={a.label} hotkey={a.hotkey || undefined} plain onPress={() => void $.prompt.submit({ text: a.text, asUser: true })} />
-      ))
-
       return (
         <Box flexDirection="column">
           <Text>{buildLine(snap, now)}</Text>
-          <Box flexDirection="row" justifyContent="space-between" marginTop={1} marginBottom={1} paddingX={1}>
-            <Box flexDirection="row" gap={3}>{buttons}</Box>
-            <Button key="settings" label="Settings" plain onPress={openSettings} />
-          </Box>
+          {buttonRow}
         </Box>
       )
     }
 
-    // VS Code draws every Button as the host theme's filled button, whatever its props; a Markdown's
-    // pressable links draw as plain underlined text in the theme's link color, which sits with the strip.
-    const href = (key: string) => `https://cruscotto/${key}`
-    const links = actions.map(a => `[${a.label}](${href(a.key)})`).join(' \u00a0·\u00a0 ')
     const { Svg } = $.ui.resolve(e)
 
     return (
       <Box flexDirection="column" alignSelf="flex-start">
         <Svg source={buildSvg(snap, now)} alt={buildLine(snap, now)} />
-        <Box flexDirection="row" justifyContent="space-between" marginTop={1} marginBottom={1} paddingX={1}>
-          <Markdown
-            key="actions"
-            text={links}
-            pressableLinks={actions.map(a => href(a.key))}
-            onLinkPress={(link: { href: string }) => {
-              const a = actions.find(x => href(x.key) === link.href)
-              if (a) void $.prompt.submit({ text: a.text, asUser: true })
-            }}
-          />
-          <Markdown key="settings" text={`[Settings](${href('settings')})`} pressableLinks={[href('settings')]} onLinkPress={openSettings} />
-        </Box>
+        {buttonRow}
       </Box>
     )
   })
