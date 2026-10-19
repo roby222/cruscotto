@@ -21,7 +21,6 @@ export const INITIAL: Snap = {
   toolsRunning: 0,
   agents: [],
   hasError: false,
-  isHidden: false,
 }
 
 // Quadro notturno: traccia scura, riempimento avorio, ambra e rosso solo oltre soglia.

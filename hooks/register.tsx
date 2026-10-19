@@ -146,9 +146,9 @@ export const register: Register = (on, options) => {
     // Mods below in the chain draw first: whoever has something to show gets the band, and cruscotto
     // takes it back when they are done. With nothing below, next(e) is the engine's own empty band.
     const below = await next(e)
-    const theirs = below.type !== 'engine'
+    if (below.type !== 'engine' || e.props.hasSurvey) return below
+    // Read the state only when drawing: a read here subscribes the band to every state write.
     const snap = await read($, snapAtom)
-    if (theirs || e.props.hasSurvey || snap.isHidden) return below
 
     const now = await $.clock.now()
     const { Box, Button, Text } = $.ui.resolve(e)

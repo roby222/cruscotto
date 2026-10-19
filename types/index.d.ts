@@ -31,7 +31,6 @@ export type Snap = {
   toolsRunning: number
   agents: string[]
   hasError: boolean
-  isHidden: boolean
 }
 
 declare module 'claude-code' {
