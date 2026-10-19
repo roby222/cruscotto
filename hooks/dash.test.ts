@@ -69,6 +69,15 @@ describe('dash helpers', () => {
     expect(rangeTone({ status: 'runsOut', msToEmpty: 117 * 60_000, msToReset: 126 * 60_000 })).toBe('ok')
     expect(rangeTone({ status: 'runsOut', msToEmpty: 20 * 60_000, msToReset: 126 * 60_000 })).toBe('bad')
     expect(rangeTone({ status: 'runsOut', msToEmpty: 20 * 60_000, msToReset: 25 * 60_000 })).toBe('ok') // empties 5 min before the refill: fine
+    // one odd reading, or a short burst, does not set the pace: the median of the pairwise paces does
+    const steady = { ...INITIAL, limits: [{ kind: 'five_hour', pct: 64, resetsAt: new Date(now + 3 * h).toISOString() }],
+      burn: [0, 10, 20, 30, 40, 50, 60].map(m => ({ t: now - (60 - m) * 60_000, pct: 40 + m * 0.4 })) } // 0.4 points/min
+    const burst = { ...steady, burn: [...steady.burn.slice(0, -1), { t: now - 6 * 60_000, pct: 50 }, { t: now, pct: 64 }] }
+    const calm = range(steady, now)
+    const spiked = range(burst, now)
+    expect(calm.status).toBe('runsOut')
+    expect(spiked.status).toBe('runsOut')
+    if (calm.status === 'runsOut' && spiked.status === 'runsOut') expect(spiked.msToEmpty).toBeGreaterThan(calm.msToEmpty * 0.6)
     // a reset inside the 90 minutes restarts the pace from the drop
     const afterReset = { ...INITIAL, limits: [{ kind: 'five_hour', pct: 40, resetsAt: new Date(now + 4 * h).toISOString() }],
       burn: [{ t: now - 80 * 60_000, pct: 80 }, { t: now - 70 * 60_000, pct: 10 }, { t: now, pct: 40 }] }

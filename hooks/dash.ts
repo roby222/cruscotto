@@ -99,18 +99,39 @@ export type Range =
   | { status: 'lasts'; spare: number }
   | { status: 'runsOut'; msToEmpty: number; msToReset: number | null }
 
-/** Autonomia della finestra 5 h: a questo ritmo, finisce prima del reset? */
-export const range = (snap: Snap, now: number): Range => {
-  const recent = snap.burn.filter(x => now - x.t <= BURN_WINDOW_MS)
+/** The readings the range reasons on: the last 90 minutes, from the last reset if one fell inside them. */
+export const burnReadings = (burn: Reading[], now: number): Reading[] => {
+  const recent = burn.filter(x => now - x.t <= BURN_WINDOW_MS)
   // A reading well under the one before it means the window reset: the pace starts over from there.
   // Ten points, so a small correction of a reading is not taken for a reset.
   const drop = recent.findLastIndex((x, i) => i > 0 && x.pct < (recent[i - 1]?.pct ?? x.pct) - 10)
-  const live = drop > 0 ? recent.slice(drop) : recent
+  return drop > 0 ? recent.slice(drop) : recent
+}
+
+/** Points per millisecond: the median of the paces between every pair of readings, so one odd reading or a
+ * short burst stays in the minority instead of setting the slope, as a line through the end points would let it. */
+export const burnPace = (live: Reading[]): number => {
+  const paces: number[] = []
+  for (let i = 0; i < live.length; i++) {
+    for (let j = i + 1; j < live.length; j++) {
+      const a = live[i] as Reading
+      const b = live[j] as Reading
+      if (b.t > a.t) paces.push((b.pct - a.pct) / (b.t - a.t))
+    }
+  }
+  paces.sort((x, y) => x - y)
+  const mid = paces.length >> 1
+  return paces.length === 0 ? 0 : paces.length % 2 ? (paces[mid] as number) : ((paces[mid - 1] as number) + (paces[mid] as number)) / 2
+}
+
+/** Autonomia della finestra 5 h: a questo ritmo, finisce prima del reset? */
+export const range = (snap: Snap, now: number): Range => {
+  const live = burnReadings(snap.burn, now)
   if (live.length < 2) return { status: 'measuring' }
   const first = live[0] as Reading
   const last = live[live.length - 1] as Reading
   if (last.t - first.t < BURN_MIN_SPAN_MS) return { status: 'measuring' }
-  const slope = (last.pct - first.pct) / (last.t - first.t)
+  const slope = burnPace(live)
   const five = snap.limits.find(l => l.kind === 'five_hour')
   const msToReset = five?.resetsAt ? Date.parse(five.resetsAt) - now : null
   // spare: the share of the window still unused when the reset comes, at this pace.
@@ -408,17 +429,13 @@ export const buildLine = (snap: Snap, now: number): string => {
 /** Le letture grezze, per confrontarle col pannello Usage. */
 /** The range's arithmetic, to check the verdict by hand: the readings it used, the pace, the projection. */
 const rangeReport = (snap: Snap, now: number): string => {
-  const recent = snap.burn.filter(x => now - x.t <= BURN_WINDOW_MS)
-  const drop = recent.findLastIndex((x, i) => i > 0 && x.pct < (recent[i - 1]?.pct ?? x.pct) - 10)
-  const live = drop > 0 ? recent.slice(drop) : recent
+  const live = burnReadings(snap.burn, now)
   const ago = (t: number) => `${Math.round((now - t) / 60000)} min ago`
   const readings = live.map(x => `${x.pct}% used ${ago(x.t)}`).join(', ') || 'none'
-  const first = live[0]
-  const last = live[live.length - 1]
-  const pace = first && last && last.t > first.t ? ((last.pct - first.pct) / ((last.t - first.t) / 60000)).toFixed(2) : '--'
+  const pace = live.length >= 2 ? (burnPace(live) * 60000).toFixed(2) : '--'
   const r = range(snap, now)
   const verdict = r.status === 'measuring' ? 'measuring' : r.status === 'lasts' ? `lasts, ${r.spare}% spare` : `empty in ${untilReset(new Date(r.msToEmpty).toISOString(), 0)}`
-  return `range: ${live.length} readings of the 5 h window in the last 90 min (${readings}); pace ${pace} points/min; ${verdict}${drop > 0 ? '; readings before a reset dropped' : ''}`
+  return `range: ${live.length} readings of the 5 h window in the last 90 min (${readings}); median pace ${pace} points/min; ${verdict}`
 }
 
 export const buildReport = (snap: Snap, now: number): string => {
