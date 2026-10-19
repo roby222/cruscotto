@@ -155,11 +155,12 @@ export const register: Register = (on, options) => {
         onPress={() => void $.command.run({ command: 'config' }).catch(() => $.ui.toast('Type /config to change the cruscotto settings'))}
       />
     )
-    // One more grid row under the tiles: no side padding, so the first button shares the tiles' left
-    // edge and Settings the odometer's right edge. VS Code paints Buttons in its theme colors whatever
+    // One more grid row under the tiles: the Svg carries the air above it, the margin goes below, so
+    // the row is not glued to the host's bottom edge; no side padding, so the first button shares the
+    // tiles' left edge and Settings the odometer's right edge. VS Code paints Buttons in its theme colors whatever
     // the props (only key, label and dimColor reach it); a text link looked like no button at all.
     const buttonRow = (
-      <Box flexDirection="row" justifyContent="space-between" marginTop={1}>
+      <Box flexDirection="row" justifyContent="space-between" marginBottom={1}>
         <Box flexDirection="row" gap={3}>{buttons}</Box>
         {settingsButton}
       </Box>

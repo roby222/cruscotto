@@ -251,7 +251,8 @@ const LAMP_PITCH = 32
 const lampRow = (x: number, y: number, list: Lamp[]): { svg: string; width: number } => {
   let s = ''
   list.forEach((l, i) => {
-    const cx = x + i * LAMP_PITCH + LAMP_PITCH / 2
+    // The first word, centred on its glyph, starts on the column edge rather than its glyph doing so.
+    const cx = x + i * LAMP_PITCH + LAMP_PITCH / 2 - 4
     const color = l.on ? toneColor(l.tone) : skin().lampOff
     s += `<g transform="translate(${f1(cx - 7)} ${y})"><title>${esc(l.title)}</title>${GLYPHS[l.key].replaceAll('COLOR', color)}</g>`
     if (l.on && l.count != null) s += text(cx + 9, y + 5, String(l.count), 8, color, 'start', 700)
@@ -303,7 +304,8 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const COL = (R - L - GAP * (cols - 1)) / cols
   const ROW = 60
   const rows = Math.ceil(cells.length / cols)
-  const H = 52 + rows * ROW
+  // Below the last bar, the same air that separates the header from the tiles: the button row is the next grid row.
+  const H = 60 + rows * ROW
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`
 
   // Header on two baselines: glyphs and the odometer value centred on y 13, the small caps on y 32.
