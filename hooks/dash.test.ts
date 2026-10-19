@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { INITIAL, buildLine, buildSvg, lamp, lampWords, lamps, leftTone, limitLabel, millions, pushReading, range, rangeTone, pushSample, ratePerMin, rateMax, SKINS, settings, shortModel, tokensOf, untilReset } from './dash'
+import { INITIAL, buildLampsSvg, buildLine, buildSvg, lamp, lampWords, lamps, leftTone, limitLabel, millions, pushReading, range, rangeTone, pushSample, ratePerMin, rateMax, SKINS, settings, shortModel, tokensOf, untilReset } from './dash'
 
 describe('dash helpers', () => {
   test('tokensOf somma i quattro conteggi', () => {
@@ -127,6 +127,6 @@ describe('dash helpers', () => {
     expect(lampWords(lamps(fast, now))).toEqual(['TURBO'])
     // the terminal line carries the words; the svg carries the tooltips
     expect(buildLine(busy, now).includes('TOOLS 3')).toBe(true)
-    expect(buildSvg(busy, now).includes('<title>3 tool calls running</title>')).toBe(true)
+    expect(buildLampsSvg(busy, now).includes('<title>3 tool calls running</title>')).toBe(true)
   })
 })

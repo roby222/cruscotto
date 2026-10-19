@@ -294,7 +294,7 @@ export const buildSvg = (snap: Snap, now: number): string => {
     ...limits.slice(1),
   ]
 
-  const W = 560
+  const W = STRIP_W
   const L = 0
   const GAP = 20
   // The right edge of everything drawn: the last tile ends one GAP before W, like every other.
@@ -305,10 +305,10 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const COL = W / cols
   const ROW = 60
   const rows = Math.ceil(cells.length / cols)
-  // Three rows, three weights: the gauges first and largest, the quiet status footer (lamps left, odometer right)
-  // under them at label size, the host's buttons below. Rows are one GAP apart.
-  const FOOT = 12 + rows * ROW
-  const H = FOOT + 38
+  // The tiles, then the odometer as a footnote on the right; the lamps live in their own Svg (buildLampsSvg),
+  // drawn by the host on the buttons' row, so the strip's bottom row is lamps left, buttons right.
+  const FOOT = 8 + rows * ROW
+  const H = FOOT + 12
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`
 
   // Tiles: label on the row's top baseline, the live value 22 below, the caption 36 below, the bar at 44.
@@ -320,16 +320,24 @@ export const buildSvg = (snap: Snap, now: number): string => {
   }
   cells.forEach((c, i) => cell(c, L + (i % cols) * COL, 8 + ROW * Math.floor(i / cols), COL - GAP))
 
-  // Footer: glyphs on FOOT, words 26 below; the odometer sits on the words' baseline, value in text, unit muted.
-  if (settings.lamps) s += lampRow(L, FOOT, lamps(snap, now)).svg
   // One text run anchored at the right edge: the label can never overlap the value, whatever its width.
-  s += `<text x="${R}" y="${FOOT + 26}" text-anchor="end" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
+  s += `<text x="${R}" y="${FOOT + 6}" text-anchor="end" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
     + `<tspan font-size="7" font-weight="600" fill="${skin().muted}">TOKENS, ALL SESSIONS  </tspan>`
     + `<tspan font-size="11" font-weight="700" fill="${skin().text}">${esc(millions(snap.total))} M</tspan></text>`
 
   s += `</svg>`
   return s
 }
+
+/** Width of the strip in viewBox units, and the lamps Svg's share of it: a Box of that width scales the lamps like the strip. */
+export const STRIP_W = 560
+export const LAMPS_W = 6 * LAMP_PITCH
+// The engine takes whole percentages only; 34% of 560 is 190.4, a scale 1% under the strip's.
+export const LAMPS_SHARE = `${Math.round((LAMPS_W / STRIP_W) * 100)}%`
+
+/** The lamp row alone, for the host's button row: no width or height attributes, so it fills its Box. */
+export const buildLampsSvg = (snap: Snap, now: number): string =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${LAMPS_W} 36">${lampRow(0, 2, lamps(snap, now)).svg}</svg>`
 
 /** Riga di testo per la superficie senza Svg. */
 export const buildLine = (snap: Snap, now: number): string => {

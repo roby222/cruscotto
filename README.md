@@ -4,7 +4,7 @@ A quiet instrument strip above the Claude Code prompt, in the spirit of a
 nineties night-lit dashboard: a row of six lamps, four tiles with one live
 number each, and three buttons for the prompts you send most often.
 
-![The strip: four tiles, Context, Session 5 h, Range and Weekly, over a status row with the lamps and the odometer](docs/skin-night.svg)
+![The strip: four tiles, Context, Session 5 h, Range and Weekly, the odometer under them, and the lamp row at the bottom left](docs/skin-night.svg)
 
 ## What it shows
 
@@ -16,9 +16,9 @@ number each, and three buttons for the prompts you send most often.
 
 Every tile has the same grammar: a small caps label, one large number that
 is the live part, a short caption, and the bar where there is a quantity.
-Under the tiles, a quieter status row: the lamps on the left, the odometer on
-the right, the total tokens counted, in millions, kept across sessions. The
-buttons follow as one group at the right edge, the gear last.
+Under the tiles, on the right, the odometer: the total tokens counted, in
+millions, kept across sessions. The bottom row has the lamps on the left and
+the buttons as one group on the right, the gear last.
 
 The Range tile is a verdict, so it has no bar: at the pace of the last 90
 minutes, does the 5-hour window last to its reset? "12% spare, lasts to the

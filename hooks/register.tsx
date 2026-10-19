@@ -4,7 +4,7 @@ import type { Register } from 'claude-code'
 import type { Snap } from '../types'
 import { ACTIONS, parseButtons } from './actions'
 import type { Action } from './actions'
-import { INITIAL, buildLine, buildReport, buildSvg, pushReading, pushSample, settings, tokensOf } from './dash'
+import { INITIAL, LAMPS_SHARE, buildLampsSvg, buildLine, buildReport, buildSvg, lampWords, lamps, pushReading, pushSample, settings, tokensOf } from './dash'
 
 const snapAtom = atom({ plugin: 'cruscotto', key: 'snap' } as const, INITIAL)
 
@@ -157,8 +157,8 @@ export const register: Register = (on, options) => {
     )
     // VS Code paints Buttons in its theme colors whatever the props (only key, label and dimColor reach
     // it). The row is one compact group at the right edge, the gear last; the margin goes below it.
-    const buttonRow = (
-      <Box flexDirection="row" justifyContent="flex-end" gap={1} marginBottom={1}>
+    const buttonGroup = (
+      <Box flexDirection="row" flexGrow={1} justifyContent="flex-end" gap={1}>
         {buttons}
         {settingsButton}
       </Box>
@@ -168,17 +168,25 @@ export const register: Register = (on, options) => {
       return (
         <Box flexDirection="column">
           <Text>{buildLine(snap, now)}</Text>
-          {buttonRow}
+          <Box flexDirection="row" marginBottom={1}>{buttonGroup}</Box>
         </Box>
       )
     }
 
     const { Svg } = $.ui.resolve(e)
+    // The lamps share the buttons' row: their Svg fills a Box as wide as their share of the strip, so
+    // glyphs and words keep the strip's scale whatever the panel width.
+    const lampCell = settings.lamps
+      ? [<Box key="lamps" width={LAMPS_SHARE}><Svg source={buildLampsSvg(snap, now)} alt={lampWords(lamps(snap, now)).join(', ') || 'no lamp lit'} /></Box>]
+      : []
 
     return (
       <Box flexDirection="column" alignSelf="flex-start">
         <Svg source={buildSvg(snap, now)} alt={buildLine(snap, now)} />
-        {buttonRow}
+        <Box flexDirection="row" alignItems="center" marginBottom={1}>
+          {lampCell}
+          {buttonGroup}
+        </Box>
       </Box>
     )
   })
