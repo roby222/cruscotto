@@ -41,9 +41,9 @@ colors itself from its compaction tick, drawn once the engine has reported it.
 | Agents | subagents are running, with their count |
 
 `/cruscotto` prints the raw readings. The strip is an image, so hovering
-shows nothing. The band is shared: when a mod that loaded after cruscotto
-has something to show there, cruscotto steps aside and comes back when
-that mod passes again.
+shows nothing. The band is shared: cruscotto draws when nothing else in
+the band does; a mod that draws there takes it, and cruscotto is back when
+that mod passes.
 
 ## Buttons
 
@@ -51,7 +51,7 @@ that mod passes again.
 - **Commit and push**: stage, commit in the style of the last commits, push;
   no force push, no rebase.
 - **Hurry up**: speed up, parallelize, say why it is slow.
-- **⚙**: opens `/config`.
+- **⚙**: shows the cruscotto settings in place of the strip; **Done** closes them.
 
 Hotkeys `g`, `c`, `h` with the strip focused. Your own buttons: point the
 **Your buttons** setting at a Markdown file where each `## Label` heading is
@@ -71,7 +71,7 @@ give them the skin's greys, in VS Code's `settings.json`:
 
 ## Settings
 
-In `/config`, also shown once at install:
+From the ⚙ button, or in `/config`, also shown once at install:
 
 | Option | Default | What it does |
 |---|---|---|

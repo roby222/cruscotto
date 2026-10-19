@@ -124,9 +124,9 @@ describe('dash helpers', () => {
     settings.skin = 'amber'
     const amber = buildSvg(INITIAL, 0)
     settings.skin = 'night'
-    expect(night.includes(SKINS.night.text)).toBe(true)
-    expect(amber.includes(SKINS.amber.text)).toBe(true)
-    expect(amber.includes(SKINS.night.text)).toBe(false)
+    expect(night.includes(SKINS.night!.text)).toBe(true)
+    expect(amber.includes(SKINS.amber!.text)).toBe(true)
+    expect(amber.includes(SKINS.night!.text)).toBe(false)
   })
 
   test('le spie: uno stato ciascuna, soglie dalle impostazioni', () => {

@@ -39,7 +39,7 @@ export const SKINS: Record<string, Skin> = {
 
 /** The userConfig values; `register` copies the plugin's options over these defaults. */
 export const settings = { skin: 'night', warnAt: 20, badAt: 5, lamps: true, coldCacheBelow: 50 }
-const skin = (): Skin => SKINS[settings.skin] ?? SKINS.night
+const skin = (): Skin => SKINS[settings.skin] ?? (SKINS.night as Skin)
 const FONT = "'Segoe UI','Helvetica Neue',Arial,sans-serif"
 
 export type Tone = 'ok' | 'warn' | 'bad'
@@ -103,11 +103,11 @@ export const range = (snap: Snap, now: number): Range => {
   const recent = snap.burn.filter(x => now - x.t <= BURN_WINDOW_MS)
   // A reading well under the one before it means the window reset: the pace starts over from there.
   // Ten points, so a small correction of a reading is not taken for a reset.
-  const drop = recent.findLastIndex((x, i) => i > 0 && x.pct < recent[i - 1].pct - 10)
+  const drop = recent.findLastIndex((x, i) => i > 0 && x.pct < (recent[i - 1]?.pct ?? x.pct) - 10)
   const live = drop > 0 ? recent.slice(drop) : recent
   if (live.length < 2) return { status: 'measuring' }
-  const first = live[0]
-  const last = live[live.length - 1]
+  const first = live[0] as Reading
+  const last = live[live.length - 1] as Reading
   if (last.t - first.t < BURN_MIN_SPAN_MS) return { status: 'measuring' }
   const slope = (last.pct - first.pct) / (last.t - first.t)
   const five = snap.limits.find(l => l.kind === 'five_hour')
@@ -140,7 +140,7 @@ export const limitLabel = (kind: string): string => {
     : kind === 'spend_limit' ? ['Spend', '']
     : [kind.replace(/_/g, ' '), '']
   const suffix = rest.replace(/^_/, '').replace(/_/g, ' ')
-  return suffix ? `${head} ${suffix[0].toUpperCase()}${suffix.slice(1)}` : head
+  return suffix ? `${head} ${suffix.charAt(0).toUpperCase()}${suffix.slice(1)}` : head
 }
 
 export const leftOf = (l: Limit): number => clamp(100 - l.pct, 0, 100)
@@ -160,7 +160,7 @@ export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[] }
   for (const l of snap.limits) {
     const left = leftOf(l)
     const label = limitLabel(l.kind)
-    const name = label[0].toLowerCase() + label.slice(1)
+    const name = label.charAt(0).toLowerCase() + label.slice(1)
     if (left <= 0) issues.push({ tone: 'bad', text: `${name} limit used up` })
     else if (left <= settings.badAt) issues.push({ tone: 'bad', text: `${name} limit almost used up` })
     else if (left <= settings.warnAt) issues.push({ tone: 'warn', text: `${name} limit running low` })
@@ -326,7 +326,7 @@ export const buildSvg = (snap: Snap, now: number, working = false): string => {
       value: ctx != null ? `${Math.round(ctx)}%` : 'n/a',
       caption: ctx != null ? `${compactTokens(snap.ctxTokens ?? 0)} of ${compactTokens(snap.ctxWindow ?? 0)}` : 'no data yet',
     },
-    limits[0],
+    limits[0] as Row,
     rangeCell,
     ...limits.slice(1),
   ]

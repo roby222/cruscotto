@@ -10,7 +10,7 @@ const world = (on: On) => {
   on('session.measure', (_$, e) => ({ changed: e.changed }))
   // Nothing below cruscotto draws: the engine's own empty band, as in a session with no other mod.
   on('ui.render', () => ({ type: 'engine', ref: 0 }))
-  on('command.register', () => ({}))
+  on('command.register', () => ({}) as never)
   on('turn.start', (_$, e) => ({ turnId: e.turnId }))
   on('turn.complete', (_$, e) => ({ text: e.answer }))
   on('session.usage', () => ({
@@ -51,7 +51,7 @@ test('misure e turno finiscono nel quadro', async ($, on) => {
   const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
   const svg = await ui.find({ type: 'Svg' })
   expect(svg).toBeDefined()
-  expect(String((svg as { props: { source: string } }).props.source)).toContain('WEEKLY FABLE')
+  expect(String((svg as unknown as { props: { source: string } }).props.source)).toContain('WEEKLY FABLE')
 })
 
 test('i pulsanti inviano il prompt di risolvi101', async ($, on) => {
@@ -86,7 +86,7 @@ test('un subagente accende AGENTS e non tocca il turno della persona', async ($,
     usage: { model: 'claude-haiku-5-5', input_tokens: 10, output_tokens: 20, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 },
   } as never)
   ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
-  const line = String(((await ui.find({ type: 'Text', text: /tok\/min/ })) as { props: { children: unknown } }).props.children)
+  const line = String(((await ui.find({ type: 'Text', text: /tok\/min/ })) as unknown as { props: { children: unknown } }).props.children)
   expect(line.includes('AGENTS')).toBe(false)
   expect(line.includes('FAILED')).toBe(false) // the subagent's error is not the person's turn failing
 })
@@ -169,3 +169,42 @@ test('con un sondaggio nella banda non disegna', async ($, on) => {
   const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: { ...(PROPS as object), hasSurvey: true } as never })
   expect(await ui.find({ type: 'Svg' })).toBeUndefined()
 })
+
+// The rows /config holds: cruscotto's own and one of the engine's, which the panel leaves out.
+const ROWS = [
+  { key: 'theme', label: 'Theme', kind: 'choice', value: 'dark', options: ['dark', 'light'], provider: { plugin: 'engine', tier: 'core' }, isLocked: false },
+  { key: 'cruscotto.skin', label: 'Skin', kind: 'choice', value: 'night', options: ['night', 'amber', 'paper', 'mono'], provider: { plugin: 'cruscotto' }, isLocked: false },
+  { key: 'cruscotto.warnAt', label: 'Amber threshold (%)', kind: 'number', value: 20, provider: { plugin: 'cruscotto' }, isLocked: false },
+  { key: 'cruscotto.lamps', label: 'Lamps', kind: 'boolean', value: true, provider: { plugin: 'cruscotto' }, isLocked: false },
+]
+
+for (const surface of ['terminal', 'vscode'] as const) {
+  test(`l'ingranaggio apre solo le impostazioni del cruscotto (${surface})`, async ($, on) => {
+    world(on)
+    const sets: { key: string; value: unknown }[] = []
+    on('config.list', () => ({ value: ROWS as never }))
+    on('config.set', (_$, e) => {
+      sets.push({ key: e.key, value: e.value })
+      return { value: e.value }
+    })
+
+    const ui = await $.ui.mount({ plugin: 'cruscotto', surface, component: 'AbovePrompt', props: PROPS })
+    await ui.press({ key: 'settings' })
+    expect(await ui.find({ type: 'Text', text: /^Skin$/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /^Theme$/ })).toBeUndefined()
+    expect((await ui.find({ key: 'cruscotto.skin=night' }))?.props.label).toBe('✓ night')
+    expect((await ui.find({ key: 'cruscotto.skin=amber' }))?.props.label).toBe('amber')
+
+    await ui.press({ key: 'cruscotto.skin=amber' })
+    await ui.press({ key: 'cruscotto.warnAt+' })
+    await ui.press({ key: 'cruscotto.lamps=Off' })
+    expect(sets).toEqual([
+      { key: 'cruscotto.skin', value: 'amber' },
+      { key: 'cruscotto.warnAt', value: 25 },
+      { key: 'cruscotto.lamps', value: false },
+    ])
+
+    await ui.press({ key: 'settings' })
+    expect(await ui.find({ type: 'Text', text: /^Skin$/ })).toBeUndefined()
+  })
+}

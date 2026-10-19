@@ -1,25 +1,23 @@
 import { atom, read, update } from 'claude-code'
-import type { Register } from 'claude-code'
+import type { ConfigRow, ConfigValue, Register } from 'claude-code'
 
 import type { Snap } from '../types'
 import { ACTIONS, parseButtons } from './actions'
 import type { Action } from './actions'
 import { INITIAL, LAMPS_SHARE, buildLampsSvg, buildLine, buildReport, buildSvg, lampWords, lamps, freshOf, pushReading, pushSample, settings, tokensOf } from './dash'
 
-/** Whether a tree another mod returned shows anything: the engine's empty band, bare boxes and blank strings do not. */
-const hasContent = (el: unknown): boolean => {
-  if (el == null || typeof el === 'boolean') return false
-  if (typeof el === 'string' || typeof el === 'number') return String(el).trim() !== ''
-  if (Array.isArray(el)) return el.some(hasContent)
+/** Whether the engine's own band is still in the tree handed up: then no mod below replaced it with a drawing of its own. */
+const holdsEngine = (el: unknown): boolean => {
+  if (el == null || typeof el !== 'object') return false
+  if (Array.isArray(el)) return el.some(holdsEngine)
   const node = el as { type?: string; props?: { children?: unknown }; children?: unknown }
-  if (node.type === 'engine') return false
-  if (node.type === 'Box' || node.type === 'div' || node.type === 'Fragment' || node.type === undefined) {
-    return hasContent(node.props?.children ?? node.children)
-  }
-  return true
+  return node.type === 'engine' || holdsEngine(node.props?.children ?? node.children)
 }
 
 const snapAtom = atom({ plugin: 'cruscotto', key: 'snap' } as const, INITIAL)
+// In $.state, not a module variable: every change of an option reloads the module, and the panel stays open.
+const openAtom = atom({ plugin: 'cruscotto', key: 'settingsOpen' } as const, false)
+const PREFIX = 'cruscotto.'
 
 export const register: Register = (on, options) => {
   Object.assign(settings, options)
@@ -156,28 +154,30 @@ export const register: Register = (on, options) => {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    // Mods below in the chain draw first: whoever has something to show gets the band, and cruscotto
-    // takes it back when they are done. With nothing below, next(e) is the engine's own empty band,
-    // possibly inside a frame a decorating mod drew around it. The price of asking first: every redraw of
-    // the strip, the 5 s tick included, runs the hooks below, and the strip waits for the slowest of them.
+    // Mods below draw first; with nothing below, next(e) is the engine's own empty band, and cruscotto draws
+    // whenever that band is still in the tree handed up. The price of asking first: every redraw, the 5 s
+    // tick included, runs the hooks below, and the strip waits for the slowest of them.
+    // shortcut: a mod below that only frames the empty band loses its frame when cruscotto draws; nest ours inside theirs if such a mod appears.
     const below = await next(e)
-    if (hasContent(below) || e.props.hasSurvey) return below
+    if (!holdsEngine(below) || e.props.hasSurvey) return below
     // Read the state only when drawing: a read here subscribes the band to every state write.
     const snap = await read($, snapAtom)
 
     const now = await $.clock.now()
     const { Box, Button, Text } = $.ui.resolve(e)
     const buttons = [...(options.buttons === false ? [] : ACTIONS), ...extra].map(a => (
-      <Button key={a.key} label={a.label} hotkey={a.hotkey || undefined} plain onPress={() => void $.prompt.submit({ text: a.text, asUser: true })} />
-    ))
-    // The gear opens the engine's own settings menu, where this plugin's options live.
-    const settingsButton = (
       <Button
-        key="settings"
-        label="⚙"
+        key={a.key}
+        label={a.label}
+        hotkey={a.hotkey || undefined}
         plain
-        onPress={() => void $.command.run({ command: 'config' }).catch(() => $.ui.toast('Type /config to change the cruscotto settings'))}
+        onPress={() => void $.prompt.submit({ text: a.text, asUser: true }).catch((err: unknown) => $.ui.toast(`Prompt not sent: ${err instanceof Error ? err.message : String(err)}`))}
       />
+    ))
+    const isOpen = await read($, openAtom)
+    // The gear opens this plugin's own rows of the engine's settings, in place of the strip.
+    const settingsButton = (
+      <Button key="settings" label={isOpen ? 'Done' : '⚙'} plain onPress={() => void update($, openAtom, (o: boolean) => !o)} />
     )
     // VS Code paints Buttons in its theme colors whatever the props (only key, label and dimColor reach
     // it). The row is one compact group at the right edge, the gear last; the host's own padding frames it.
@@ -187,6 +187,51 @@ export const register: Register = (on, options) => {
         {settingsButton}
       </Box>
     )
+
+    if (isOpen) {
+      // The same rows /config holds for this plugin: the values stay in the engine's settings.
+      const rows = (await $.config.list().catch(() => [] as ConfigRow[])).filter(r => r.key.startsWith(PREFIX))
+      const els = $.ui.resolve(e)
+      const Input = 'Input' in els ? els.Input : undefined
+      const set = async (key: string, value: ConfigValue) => {
+        const r = await $.config.set({ key, value })
+        if (r.deny) return void $.ui.toast(r.deny)
+        Object.assign(settings, { [key.slice(PREFIX.length)]: value })
+        $.ui.invalidate('ui.render')
+      }
+      const pick = (r: ConfigRow, value: ConfigValue, label: string) => (
+        <Button key={`${r.key}=${label}`} label={r.value === value ? `✓ ${label}` : label} plain onPress={() => void set(r.key, value)} />
+      )
+      const control = (r: ConfigRow) => {
+        if (r.isLocked) return <Text dimColor>{String(r.value)}</Text>
+        if (r.kind === 'boolean') return [pick(r, true, 'On'), pick(r, false, 'Off')]
+        if (r.kind === 'choice') return (r.options ?? []).map(o => pick(r, o, o))
+        if (r.kind === 'number') {
+          const n = Number(r.value) || 0
+          return [
+            <Button key={`${r.key}-`} label="−" plain onPress={() => void set(r.key, Math.max(0, n - 5))} />,
+            <Box key={`${r.key}=`}><Text>{String(n)}</Text></Box>,
+            <Button key={`${r.key}+`} label="+" plain onPress={() => void set(r.key, Math.min(100, n + 5))} />,
+          ]
+        }
+        return Input
+          ? <Input key={r.key} value={String(r.value ?? '')} placeholder="Path to a Markdown file" submitLabel="Save" onSubmit={v => void set(r.key, v.trim())} />
+          : <Text>{String(r.value || '—')}</Text>
+      }
+
+      return (
+        <Box flexDirection="column" gap={1}>
+          {rows.length === 0 && <Text>No cruscotto settings found: type /config</Text>}
+          {rows.map(r => (
+            <Box key={r.key} flexDirection="row" alignItems="center" gap={1}>
+              <Box width={e.surface === 'terminal' ? 22 : '28%'}><Text>{r.label}</Text></Box>
+              {control(r)}
+            </Box>
+          ))}
+          <Box flexDirection="row">{buttonGroup}</Box>
+        </Box>
+      )
+    }
 
     if (e.surface === 'terminal') {
       return (
