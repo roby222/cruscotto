@@ -1,8 +1,9 @@
 # cruscotto
 
-An instrument strip above the Claude Code prompt: how much context and quota
-you have left, how fast Claude is working, what the session costs, and
-buttons for the prompts you send most often.
+An instrument strip above the Claude Code prompt, in the VS Code extension
+and the desktop app: how much context and quota you have left, how fast
+Claude is working, what the session costs, and buttons for the prompts you
+send most often. In the terminal it is one line of text.
 
 ![The strip: four tiles, Context, Session 5 h, Range and Weekly; under them the tokens-per-minute meter, the last-turns spectrum and the session's tokens and cost; the lamps and the buttons at the bottom](docs/skin-night.svg)
 
@@ -37,8 +38,8 @@ Bars turn amber at 20% left and red at 5%; both are settings.
 | Tools | tool calls are running, with their count |
 | Agents | subagents are running, with their count |
 
-`/cruscotto` prints the raw readings. In VS Code the strip is an image, so
-hovering shows nothing; on the terminal it is one line of text.
+`/cruscotto` prints the raw readings. The strip is an image, so hovering
+shows nothing.
 
 ## Buttons
 
