@@ -133,3 +133,35 @@ test('cede la banda a chi ha qualcosa da mostrare', { plugins: [other] }, async 
   expect(await ui.find({ type: 'Text', text: /another mod/ })).toBeDefined()
   expect(await ui.find({ type: 'Svg' })).toBeUndefined()
 })
+
+// A mod that draws while it has something, then passes. Inline mods run sandboxed, with no reach into the
+// test's variables, so the band's own maxRows prop stands in for its state: 1 means busy.
+const toggling = {
+  name: 'toggling',
+  register(on: On) {
+    on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+      if (e.props.maxRows !== 1) return next(e)
+      const { Text } = $.ui.resolve(e)
+      return <Text>busy below</Text>
+    })
+  },
+}
+
+test('riprende la banda quando chi stava sotto passa di nuovo', { plugins: [toggling] }, async ($, on) => {
+  world(on)
+
+  let ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: { ...(PROPS as object), maxRows: 1 } as never })
+  expect(await ui.find({ type: 'Text', text: /busy below/ })).toBeDefined()
+  expect(await ui.find({ type: 'Svg' })).toBeUndefined()
+  await ui.unmount()
+
+  ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
+  expect(await ui.find({ type: 'Svg' })).toBeDefined()
+})
+
+test('con un sondaggio nella banda non disegna', async ($, on) => {
+  world(on)
+
+  const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: { ...(PROPS as object), hasSurvey: true } as never })
+  expect(await ui.find({ type: 'Svg' })).toBeUndefined()
+})
