@@ -1,7 +1,7 @@
 # cruscotto
 
 A quiet instrument strip above the Claude Code prompt: four tiles with one
-live number each, six lamps, and buttons for the prompts you send most
+live number each, five lamps, and buttons for the prompts you send most
 often. Flat, sans, no chrome, readable at a glance.
 
 ![The strip: four tiles, Context, Session 5 h, Range and Weekly, the odometer under them, and the lamp row at the bottom left](docs/skin-night.svg)
@@ -17,7 +17,9 @@ often. Flat, sans, no chrome, readable at a glance.
 Every tile has the same grammar: a small caps label, one large number that
 is the live part, a short caption, and the bar where there is a quantity.
 Under the tiles, on the right, the odometer: the total tokens counted, in
-millions, kept across sessions. The bottom row has the lamps on the left and
+millions, kept across sessions, and beside it in green what they would have
+cost at API prices, a counter that only goes up (nothing is billed on a Pro
+or Max plan). The bottom row has the lamps on the left and
 the buttons as one group on the right, the gear last.
 
 The Range tile is a verdict, so it has no bar: at the pace of the last 90
@@ -42,7 +44,6 @@ information.
 | Lamp | Glyph | Lights when | Color |
 |---|---|---|---|
 | Failed | warning triangle | the last turn ended in error | red |
-| Cost | coin | the API-price value of this session reaches the cost setting, $10 by default, and stays lit for the rest of the session. The figure is what the tokens would cost on an API key; on a Pro or Max plan nothing is billed and the rate-limit windows already show the quota, so set it to 0 there | amber |
 | Cold | snowflake | the cache hit of the last turn is under 50%: the context is being paid at full price, as after a compaction | amber |
 | Tools | wrench, with a count | tool calls are running right now | green |
 | Agents | two people, with a count | subagents are running right now | green |
@@ -107,7 +108,6 @@ plugin's options live; the same screen appears once at install.
 | Amber threshold | 20 | A bar turns amber at this share left or less |
 | Red threshold | 5 | The same for red |
 | Lamps | on | Show the lamp row |
-| Cost lamp | 10 | API-price value of the session, in USD, that lights the cost lamp; 0 turns it off, the sensible choice on a subscription plan |
 | Cold cache lamp | 50 | Cache hit share under which the cold lamp lights |
 | Turbo lamp | 200000 | Tokens per minute that light the turbo lamp; 0 turns it off |
 | Prompt buttons | on | Show the three built-in prompt buttons |

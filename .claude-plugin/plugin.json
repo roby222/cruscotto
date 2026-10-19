@@ -1,7 +1,7 @@
 {
   "name": "cruscotto",
   "version": "0.1.0",
-  "description": "Instrument strip above the prompt: context, 5-hour and weekly limits, range to the reset, total tokens, six lamps and prompt buttons.",
+  "description": "Instrument strip above the prompt: context, 5-hour and weekly limits, range to the reset, total tokens and their API value, five lamps and prompt buttons.",
   "author": {
     "name": "Roberto Pisu",
     "url": "https://github.com/roby222"
@@ -38,14 +38,8 @@
     "lamps": {
       "type": "boolean",
       "title": "Lamps",
-      "description": "Show the six lamps on the bottom row: failed turn, cost, cold cache, tools running, agents running, turbo.",
+      "description": "Show the five lamps on the bottom row: failed turn, cold cache, tools running, agents running, turbo.",
       "default": true
-    },
-    "costAlertUsd": {
-      "type": "number",
-      "title": "Cost lamp (USD)",
-      "description": "The cost lamp lights amber when the session's API-price value reaches this many USD; 0 turns it off (sensible on a Pro or Max plan, where nothing is billed).",
-      "default": 10
     },
     "coldCacheBelow": {
       "type": "number",

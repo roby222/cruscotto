@@ -116,12 +116,14 @@ describe('dash helpers', () => {
     const quiet = { ...INITIAL, cacheHit: 0.9, usd: 2 }
     expect(lampWords(lamps(quiet, now))).toEqual([])
     const busy = { ...quiet, hasError: true, toolsRunning: 3, agents: ['a1'], cacheHit: 0.2, usd: 12 }
-    expect(lampWords(lamps(busy, now))).toEqual(['FAILED', 'COST', 'COLD', 'TOOLS 3', 'AGENTS 1'])
+    expect(lampWords(lamps(busy, now))).toEqual(['FAILED', 'COLD', 'TOOLS 3', 'AGENTS 1'])
     expect(lamps(busy, now).find(l => l.key === 'tools')?.count).toBe(3)
-    // cost lamp off at 0; cold threshold follows the setting
-    Object.assign(settings, { costAlertUsd: 0, coldCacheBelow: 10 })
+    // cold threshold follows the setting
+    Object.assign(settings, { coldCacheBelow: 10 })
     expect(lampWords(lamps(busy, now))).toEqual(['FAILED', 'TOOLS 3', 'AGENTS 1'])
-    Object.assign(settings, { costAlertUsd: 10, coldCacheBelow: 50 })
+    Object.assign(settings, { coldCacheBelow: 50 })
+    // the odometer adds this session's API value to the earlier sessions'
+    expect(buildSvg({ ...busy, usdBase: 10.25 }, now).includes('$22.25')).toBe(true)
     // turbo from the 5-minute rate
     const fast = { ...quiet, samples: [{ t: now - 60_000, tokens: 600_000 }, { t: now, tokens: 600_000 }] } // 1.2 M in 5 min = 240 k/min
     expect(lampWords(lamps(fast, now))).toEqual(['TURBO'])

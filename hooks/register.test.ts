@@ -50,7 +50,7 @@ test('misure e turno finiscono nel quadro', async ($, on) => {
     },
   } as never)
 
-  expect(saved).toEqual([1000])
+  expect(saved).toEqual([1000, 1.5]) // tokens, then the API value for the odometer
 
   const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
   const svg = await ui.find({ type: 'Svg' })

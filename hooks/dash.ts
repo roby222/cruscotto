@@ -11,6 +11,7 @@ export const INITIAL: Snap = {
   compactPct: null,
   limits: [],
   usd: null,
+  usdBase: 0,
   total: 0,
   trip: 0,
   samples: [],
@@ -39,7 +40,7 @@ export const SKINS: Record<string, Skin> = {
 }
 
 /** The userConfig values; `register` copies the plugin's options over these defaults. */
-export const settings = { skin: 'night', warnAt: 20, badAt: 5, lamps: true, costAlertUsd: 10, coldCacheBelow: 50, turboAt: 200000 }
+export const settings = { skin: 'night', warnAt: 20, badAt: 5, lamps: true, coldCacheBelow: 50, turboAt: 200000 }
 const skin = (): Skin => SKINS[settings.skin] ?? SKINS.night
 const FONT = "'Segoe UI','Helvetica Neue',Arial,sans-serif"
 
@@ -195,19 +196,15 @@ const bar = (x: number, y: number, w: number, frac: number | null, tone: Tone, m
   return s
 }
 
-export type LampKey = 'failed' | 'cost' | 'cold' | 'tools' | 'agents' | 'turbo'
+export type LampKey = 'failed' | 'cold' | 'tools' | 'agents' | 'turbo'
 export type Lamp = { key: LampKey; on: boolean; tone: Tone; count?: number; word: string; title: string }
 
-/** The six lamps: one state each, none for what a bar already shows. */
+/** The five lamps: one state each, none for what a bar or a counter already shows. */
 export const lamps = (snap: Snap, now: number): Lamp[] => {
   const rate = ratePerMin(snap.samples, now)
   const cache = snap.cacheHit != null ? Math.round(snap.cacheHit * 100) : null
   return [
     { key: 'failed', on: snap.hasError, tone: 'bad', word: 'FAILED', title: snap.hasError ? 'The last turn ended in error' : 'Lights red when a turn ends in error' },
-    {
-      key: 'cost', on: settings.costAlertUsd > 0 && snap.usd != null && snap.usd >= settings.costAlertUsd, tone: 'warn', word: 'COST',
-      title: `Session cost ${snap.usd != null ? '$' + snap.usd.toFixed(2) : 'unknown'}; lights amber at $${settings.costAlertUsd}`,
-    },
     {
       key: 'cold', on: cache != null && cache < settings.coldCacheBelow, tone: 'warn', word: 'COLD',
       title: `Cache hit ${cache != null ? cache + '%' : 'unknown'} on the last turn; lights amber under ${settings.coldCacheBelow}%`,
@@ -229,8 +226,6 @@ export const lampWords = (list: Lamp[]): string[] =>
 const GLYPHS: Record<LampKey, string> = {
   failed:
     '<path d="M7 1.5 L13.25 12.5 H0.75 Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 6 V8" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="10.4" r="0.9" fill="COLOR"/>',
-  cost:
-    '<path d="M2.75 3.5 H11.25 Q12.5 3.5 12.5 4.75 V9.25 Q12.5 10.5 11.25 10.5 H2.75 Q1.5 10.5 1.5 9.25 V4.75 Q1.5 3.5 2.75 3.5 Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="7" r="1.25" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 6.5 V7.5 M10.5 6.5 V7.5" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
   cold:
     '<path d="M7 12.5 L7 1.5 M2.24 9.75 L11.76 4.25 M2.24 4.25 L11.76 9.75 M10.64 4.9 L10.64 3.7 M10.64 4.9 L11.68 5.5 M7 2.8 L5.96 2.2 M7 2.8 L8.04 2.2 M3.36 4.9 L2.32 5.5 M3.36 4.9 L3.36 3.7 M3.36 9.1 L3.36 10.3 M3.36 9.1 L2.32 8.5 M7 11.2 L8.04 11.8 M7 11.2 L5.96 11.8 M10.64 9.1 L11.68 8.5 M10.64 9.1 L10.64 10.3" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
   tools:
@@ -320,10 +315,13 @@ export const buildSvg = (snap: Snap, now: number): string => {
   }
   cells.forEach((c, i) => cell(c, L + (i % cols) * COL, 8 + ROW * Math.floor(i / cols), COL - GAP))
 
-  // One text run anchored at the right edge: the label can never overlap the value, whatever its width.
+  // One text run anchored at the right edge, so nothing can overlap: the tokens of every session, then what
+  // they would have cost on an API key, in the ok color, a counter that only ever goes up.
   s += `<text x="${R}" y="${FOOT + 6}" text-anchor="end" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
+    + `<title>Tokens of every session, and their value at API prices (nothing is billed on a subscription plan)</title>`
     + `<tspan font-size="7" font-weight="600" fill="${skin().muted}">TOKENS, ALL SESSIONS  </tspan>`
-    + `<tspan font-size="11" font-weight="700" fill="${skin().text}">${esc(millions(snap.total))} M</tspan></text>`
+    + `<tspan font-size="11" font-weight="700" fill="${skin().text}">${esc(millions(snap.total))} M</tspan>`
+    + `<tspan font-size="11" font-weight="700" fill="${skin().ok}">  ${esc(usdAll(snap))}</tspan></text>`
 
   s += `</svg>`
   return s
@@ -331,13 +329,16 @@ export const buildSvg = (snap: Snap, now: number): string => {
 
 /** Width of the strip in viewBox units, and the lamps Svg's share of it: a Box of that width scales the lamps like the strip. */
 export const STRIP_W = 560
-export const LAMPS_W = 6 * LAMP_PITCH
+export const LAMPS_W = 5 * LAMP_PITCH
 // The engine takes whole percentages only; 34% of 560 is 190.4, a scale 1% under the strip's.
 export const LAMPS_SHARE = `${Math.round((LAMPS_W / STRIP_W) * 100)}%`
 
 /** The lamp row alone, for the host's button row: no width or height attributes, so it fills its Box. */
 export const buildLampsSvg = (snap: Snap, now: number): string =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${LAMPS_W} 36">${lampRow(0, 2, lamps(snap, now)).svg}</svg>`
+
+/** The API-price value of every session, this one included, as a dollar figure. */
+export const usdAll = (snap: Snap): string => `$${(snap.usdBase + (snap.usd ?? 0)).toFixed(2)}`
 
 /** Riga di testo per la superficie senza Svg. */
 export const buildLine = (snap: Snap, now: number): string => {
@@ -347,7 +348,7 @@ export const buildLine = (snap: Snap, now: number): string => {
   const { reasons } = lamp(snap, now)
   const lit = settings.lamps ? lampWords(lamps(snap, now)) : []
   const warn = [...lit, ...reasons].length ? ` | ${[...lit, ...reasons].join(', ')}` : ''
-  return `${compactTokens(rate)} tok/min | ctx ${ctx}${limits ? ' | ' + limits : ''} | total ${millions(snap.total)}M${warn}`
+  return `${compactTokens(rate)} tok/min | ctx ${ctx}${limits ? ' | ' + limits : ''} | total ${millions(snap.total)}M ${usdAll(snap)}${warn}`
 }
 
 /** Le letture grezze, per confrontarle col pannello Usage. */
@@ -358,7 +359,7 @@ export const buildReport = (snap: Snap, now: number): string => {
     ...snap.limits.map(l => `${l.kind}: used ${l.pct}%, left ${Math.round(leftOf(l))}%, resets in ${untilReset(l.resetsAt, now)} (${l.resetsAt ?? '--'})`),
     `tokens: ${snap.total} (${millions(snap.total)} M), this session ${snap.trip}`,
     `rate: ${Math.round(ratePerMin(snap.samples, now))} tokens/min over the last 5 minutes`,
-    `cost: ${snap.usd != null ? '$' + snap.usd.toFixed(4) : '--'}, cache ${snap.cacheHit != null ? Math.round(snap.cacheHit * 100) + '%' : '--'}`,
+    `cost: ${snap.usd != null ? '$' + snap.usd.toFixed(4) : '--'} this session, ${usdAll(snap)} all sessions at API prices, cache ${snap.cacheHit != null ? Math.round(snap.cacheHit * 100) + '%' : '--'}`,
     `last turn: ${snap.lastSeconds ?? '--'} s, ${snap.lastTools} tools${snap.hasError ? ', ended in error' : ''}`,
     `lamps: ${lampWords(lamps(snap, now)).join(', ') || 'none lit'}; running now ${snap.toolsRunning} tools, ${snap.agents.length} agents`,
   ]

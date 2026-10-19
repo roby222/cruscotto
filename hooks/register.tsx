@@ -17,7 +17,8 @@ export const register: Register = (on, options) => {
 
   on('session.start', async ($, e, next) => {
     const stored = Number((await $.store.get('totalTokens')) ?? 0)
-    await update($, snapAtom, (s: Snap) => ({ ...s, total: Number.isFinite(stored) ? stored : 0, toolsRunning: 0, agents: [] }))
+    const usdStored = Number((await $.store.get('totalUsd')) ?? 0)
+    await update($, snapAtom, (s: Snap) => ({ ...s, total: Number.isFinite(stored) ? stored : 0, usdBase: Number.isFinite(usdStored) ? usdStored : 0, toolsRunning: 0, agents: [] }))
     await $.command.register({ name: 'cruscotto', description: 'Raw cruscotto readings, to compare with the Usage panel' })
     if (buttonsFile) extra = parseButtons(await $.fs.read(buttonsFile).catch(() => ''))
     // "resets in", the range and the turbo lamp move with the clock, not with a state write.
@@ -129,6 +130,8 @@ export const register: Register = (on, options) => {
 
     if (used > 0) {
       await $.store.set('totalTokens', total)
+      const snap = await read($, snapAtom)
+      if (snap.usd != null) await $.store.set('totalUsd', snap.usdBase + snap.usd)
     }
 
     return next(e)

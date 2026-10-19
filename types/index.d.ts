@@ -14,6 +14,8 @@ export type Snap = {
   compactPct: number | null
   limits: Limit[]
   usd: number | null
+  /** API-price value of the earlier sessions, from the store; the odometer shows usdBase + usd. */
+  usdBase: number
   total: number
   trip: number
   samples: Sample[]
