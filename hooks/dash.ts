@@ -102,8 +102,9 @@ export type Range =
 /** Autonomia della finestra 5 h: a questo ritmo, finisce prima del reset? */
 export const range = (snap: Snap, now: number): Range => {
   const recent = snap.burn.filter(x => now - x.t <= BURN_WINDOW_MS)
-  // A reading lower than the one before it means the window reset: the pace starts over from there.
-  const drop = recent.findLastIndex((x, i) => i > 0 && x.pct < recent[i - 1].pct)
+  // A reading well under the one before it means the window reset: the pace starts over from there.
+  // Ten points, so a small correction of a reading is not taken for a reset.
+  const drop = recent.findLastIndex((x, i) => i > 0 && x.pct < recent[i - 1].pct - 10)
   const live = drop > 0 ? recent.slice(drop) : recent
   if (live.length < 2) return { status: 'measuring' }
   const first = live[0]
@@ -150,9 +151,9 @@ export const leftTone = (left: number | null): Tone => (left == null ? 'ok' : le
 /** Every issue as a short text, for the terminal line and the report; the worst tone with them. */
 export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[] } => {
   const issues: { tone: Tone; text: string }[] = []
-  const compactAt = snap.compactPct != null ? snap.compactPct / 100 : 0.8
-
-  if (snap.ctxPct != null) {
+  // No context issue until the engine has said where auto-compaction sits.
+  if (snap.ctxPct != null && snap.compactPct != null) {
+    const compactAt = snap.compactPct / 100
     const f = snap.ctxPct / 100
     if (f >= compactAt - 0.05) issues.push({ tone: 'bad', text: 'context almost full' })
     else if (f >= compactAt - 0.2) issues.push({ tone: 'warn', text: 'context high' })

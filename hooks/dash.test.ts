@@ -89,7 +89,7 @@ describe('dash helpers', () => {
     expect(lamp({ ...INITIAL, ctxPct: 30, limits: [{ kind: 'five_hour', pct: 79 }] }, 0)).toEqual({ tone: 'ok', reasons: [] })
     expect(lamp({ ...INITIAL, limits: [{ kind: 'five_hour', pct: 80 }] }, 0)).toEqual({ tone: 'warn', reasons: ['session 5 h limit running low'] })
     expect(lamp({ ...INITIAL, limits: [{ kind: 'seven_day', pct: 95 }] }, 0)).toEqual({ tone: 'bad', reasons: ['weekly limit almost used up'] })
-    expect(lamp({ ...INITIAL, ctxPct: 78, limits: [{ kind: 'seven_day', pct: 85 }] }, 0)).toEqual({
+    expect(lamp({ ...INITIAL, ctxPct: 78, compactPct: 80, limits: [{ kind: 'seven_day', pct: 85 }] }, 0)).toEqual({
       tone: 'bad',
       reasons: ['context almost full', 'weekly limit running low'],
     })
