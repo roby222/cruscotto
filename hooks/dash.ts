@@ -242,8 +242,7 @@ const GLYPHS: Record<LampKey, string> = {
 }
 
 /** Header blocks share one grammar: the value on the top line, a small caps label under it. */
-const LABEL_Y = 32
-const label = (x: number, t: string, color: string, anchor = 'start'): string => text(x, LABEL_Y, t, 7, color, anchor, 600)
+const label = (x: number, y: number, t: string, color: string, anchor = 'start'): string => text(x, y, t, 7, color, anchor, 600)
 
 const LAMP_PITCH = 32
 
@@ -256,7 +255,7 @@ const lampRow = (x: number, y: number, list: Lamp[]): { svg: string; width: numb
     const color = l.on ? toneColor(l.tone) : skin().lampOff
     s += `<g transform="translate(${f1(cx - 7)} ${y})"><title>${esc(l.title)}</title>${GLYPHS[l.key].replaceAll('COLOR', color)}</g>`
     if (l.on && l.count != null) s += text(cx + 9, y + 5, String(l.count), 8, color, 'start', 700)
-    s += label(cx, l.word, l.on ? toneColor(l.tone) : skin().muted, 'middle')
+    s += label(cx, y + 26, l.word, l.on ? toneColor(l.tone) : skin().muted, 'middle')
   })
   return { svg: s, width: list.length * LAMP_PITCH }
 }
@@ -305,13 +304,11 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const ROW = 60
   const rows = Math.ceil(cells.length / cols)
   // Below the last bar, the same air that separates the header from the tiles: the button row is the next grid row.
-  const H = 60 + rows * ROW
+  // Three rows, three weights: the gauges first and largest, the quiet status footer (lamps left, odometer right)
+  // under them at label size, the host's buttons below. Rows are one GAP apart.
+  const FOOT = 12 + rows * ROW
+  const H = FOOT + 38
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`
-
-  // Header on two baselines: glyphs and the odometer value centred on y 13, the small caps on y 32.
-  if (settings.lamps) s += lampRow(L, 6, lamps(snap, now)).svg
-  s += text(R, 18, `${millions(snap.total)} M`, 14, skin().text, 'end', 700)
-  s += label(R, 'TOKENS, ALL SESSIONS', skin().muted, 'end')
 
   // Tiles: label on the row's top baseline, the live value 22 below, the caption 36 below, the bar at 44.
   const cell = (c: Row, x: number, y: number, w: number) => {
@@ -320,7 +317,12 @@ export const buildSvg = (snap: Snap, now: number): string => {
     s += text(x, y + 36, c.caption, 9, skin().muted)
     if (c.frac != null || c.marker != null) s += bar(x, y + 44, w, c.frac, c.tone, c.marker)
   }
-  cells.forEach((c, i) => cell(c, L + (i % cols) * (COL + GAP), 56 + ROW * Math.floor(i / cols), COL))
+  cells.forEach((c, i) => cell(c, L + (i % cols) * (COL + GAP), 8 + ROW * Math.floor(i / cols), COL))
+
+  // Footer: glyphs on FOOT, words 26 below; the odometer sits on the words' baseline, value in text, unit muted.
+  if (settings.lamps) s += lampRow(L, FOOT, lamps(snap, now)).svg
+  s += text(R, FOOT + 26, `${millions(snap.total)} M`, 11, skin().text, 'end', 700)
+  s += label(R - 46, FOOT + 26, 'TOKENS, ALL SESSIONS', skin().muted, 'end')
 
   s += `</svg>`
   return s
