@@ -258,7 +258,11 @@ const VU_SEGMENTS = 10
 export const vuLit = (rate: number): number => Math.min(VU_SEGMENTS, Math.round((rate / VU_FULL) * VU_SEGMENTS))
 
 /** A VU meter of the 5-minute token rate: ten segments, green then amber then red, and a peak-hold outline from the last 20 s. */
-const vuMeter = (x: number, y: number, snap: Snap, now: number): string => {
+// While a turn runs, the engine gives the plugin no tokens, so the meter cannot measure: it shows the work
+// instead, a wave of light running over the unlit segments (SVG animation, which the VS Code webview draws).
+const WAVE = (i: number) => `<animate attributeName="fill-opacity" values="0;0.9;0" dur="1.6s" begin="${(i * 0.16).toFixed(2)}s" repeatCount="indefinite"/>`
+
+const vuMeter = (x: number, y: number, snap: Snap, now: number, working: boolean): string => {
   const rate = ratePerMin(snap.samples, now)
   const lit = vuLit(rate)
   const peak = Math.max(...[0, 5, 10, 15, 20].map(sec => vuLit(ratePerMin(snap.samples, now - sec * 1000))))
@@ -267,8 +271,11 @@ const vuMeter = (x: number, y: number, snap: Snap, now: number): string => {
   for (let i = 0; i < VU_SEGMENTS; i++) {
     const sx = x + i * 8
     if (i < lit) s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${color(i)}"/>`
-    else if (i === peak - 1) s += `<rect x="${sx + 0.5}" y="${y + 0.5}" width="5" height="11" rx="1" fill="none" stroke="${color(i)}" stroke-width="1"/>`
-    else s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${skin().track}"/>`
+    else if (i === peak - 1 && !working) s += `<rect x="${sx + 0.5}" y="${y + 0.5}" width="5" height="11" rx="1" fill="none" stroke="${color(i)}" stroke-width="1"/>`
+    else {
+      s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${skin().track}"/>`
+      if (working) s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${color(i)}" fill-opacity="0">${WAVE(i)}</rect>`
+    }
   }
   return s + '</g>'
 }
@@ -289,7 +296,7 @@ const spectrum = (x: number, y: number, turns: number[] | undefined, live = 0): 
     const h = t == null ? 1 : Math.max(1, Math.round((t / top) * 12))
     const isLive = live > 0 && i === 7
     s += isLive
-      ? `<rect x="${x + i * 7 + 0.5}" y="${y + 12 - h + 0.5}" width="4" height="${Math.max(1, h - 1)}" rx="1" fill="none" stroke="${skin().ok}" stroke-width="1"/>`
+      ? `<rect x="${x + i * 7 + 0.5}" y="${y + 12 - h + 0.5}" width="4" height="${Math.max(1, h - 1)}" rx="1" fill="none" stroke="${skin().ok}" stroke-width="1"><animate attributeName="stroke-opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite"/></rect>`
       : `<rect x="${x + i * 7}" y="${y + 12 - h}" width="5" height="${h}" rx="1" fill="${t == null ? skin().track : skin().ok}"/>`
   }
   return s + '</g>'
@@ -297,7 +304,8 @@ const spectrum = (x: number, y: number, turns: number[] | undefined, live = 0): 
 
 type Row = { name: string; frac: number | null; tone: Tone; value: string; caption: string; marker?: number | null }
 
-export const buildSvg = (snap: Snap, now: number): string => {
+/** The strip; `working` while the engine says a turn is in progress, when the meters move instead of measuring. */
+export const buildSvg = (snap: Snap, now: number, working = false): string => {
   const ctx = snap.ctxPct
   const compactAt = snap.compactPct != null ? snap.compactPct / 100 : 0.8
   const ctxFrac = ctx != null ? ctx / 100 : null
@@ -358,7 +366,7 @@ export const buildSvg = (snap: Snap, now: number): string => {
 
   // Meters share the tiles' grammar: small caps label on the row's baseline, the instrument under it.
   s += text(L, FOOT + 6, 'RATE', 7, skin().muted, 'start', 600)
-  s += vuMeter(L, FOOT + 10, snap, now)
+  s += vuMeter(L, FOOT + 10, snap, now, working)
   s += text(L + VU_W + GAP, FOOT + 6, 'LAST TURNS', 7, skin().muted, 'start', 600)
   s += spectrum(L + VU_W + GAP, FOOT + 10, snap.turns, snap.live ?? 0)
 

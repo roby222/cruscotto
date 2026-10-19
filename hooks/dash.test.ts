@@ -114,6 +114,9 @@ describe('dash helpers', () => {
     expect(svg.includes('Tokens of the last 3 turns, oldest first: 1 k, 48 k, 12 k')).toBe(true)
     expect(buildSvg(INITIAL, now).includes('oldest first: none yet')).toBe(true)
     expect(buildSvg({ ...hot, live: 7_000 }, now).includes('in progress about 7 k')).toBe(true)
+    // the meter moves only while a turn runs
+    expect(buildSvg(hot, now).includes('<animate')).toBe(false)
+    expect(buildSvg(hot, now, true).includes('<animate')).toBe(true)
   })
 
   test('la skin cambia i colori del quadro', () => {

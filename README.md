@@ -13,7 +13,7 @@ often. Flat, sans, no chrome, readable at a glance.
 | Context | How full the context window is, with a tick at the auto-compaction threshold |
 | Session 5 h | Share of the 5-hour rate-limit window left, and when it resets |
 | Weekly | Share of the 7-day window left, and when it resets; any other window the API reports gets its own bar |
-| Rate | A ten-segment VU meter of the token rate over the last 5 minutes, green up to 140 k/min, amber to 180 k, red at the 200 k full scale; the outlined segment is the peak of the last 20 s |
+| Rate | A ten-segment VU meter of the token rate over the last 5 minutes, green up to 140 k/min, amber to 180 k, red at the 200 k full scale; the outlined segment is the peak of the last 20 s. While a turn runs the engine reports no tokens, so a wave of light runs over the meter instead |
 | Last turns | A spectrum of the last eight turns, one column each, as tall as its tokens against the heaviest of the eight |
 
 Every tile has the same grammar: a small caps label, one large number that

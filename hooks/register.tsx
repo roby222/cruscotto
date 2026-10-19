@@ -182,7 +182,7 @@ export const register: Register = (on, options) => {
 
     return (
       <Box flexDirection="column" alignSelf="flex-start">
-        <Svg source={buildSvg(snap, now)} alt={buildLine(snap, now)} />
+        <Svg source={buildSvg(snap, now, Boolean(e.props.isWorking))} alt={buildLine(snap, now)} />
         <Box flexDirection="row" alignItems="center">
           {lampCell}
           {buttonGroup}
