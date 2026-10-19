@@ -16,9 +16,9 @@ often. Flat, sans, no chrome, readable at a glance.
 
 Every tile has the same grammar: a small caps label, one large number that
 is the live part, a short caption, and the bar where there is a quantity.
-Under the tiles, on the right, the odometer: this session's tokens, in
-millions, and beside it in green what they would have cost at API prices
-(nothing is billed on a Pro or Max plan). The bottom row has the lamps on the left and
+Under the tiles, on the right, two counters: this session's tokens, in
+millions, and what they would have cost at API prices (nothing is billed on
+a Pro or Max plan). The bottom row has the lamps on the left and
 the buttons as one group on the right, the gear last.
 
 The Range tile is a verdict, so it has no bar: at the pace of the last 90

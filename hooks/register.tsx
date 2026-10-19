@@ -143,7 +143,7 @@ export const register: Register = (on, options) => {
       />
     )
     // VS Code paints Buttons in its theme colors whatever the props (only key, label and dimColor reach
-    // it). The row is one compact group at the right edge, the gear last; the margin goes below it.
+    // it). The row is one compact group at the right edge, the gear last; the host's own padding frames it.
     const buttonGroup = (
       <Box flexDirection="row" flexGrow={1} justifyContent="flex-end" gap={1}>
         {buttons}
@@ -155,7 +155,7 @@ export const register: Register = (on, options) => {
       return (
         <Box flexDirection="column">
           <Text>{buildLine(snap, now)}</Text>
-          <Box flexDirection="row" marginBottom={1}>{buttonGroup}</Box>
+          <Box flexDirection="row">{buttonGroup}</Box>
         </Box>
       )
     }
@@ -170,7 +170,7 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column" alignSelf="flex-start">
         <Svg source={buildSvg(snap, now)} alt={buildLine(snap, now)} />
-        <Box flexDirection="row" alignItems="center" marginBottom={1}>
+        <Box flexDirection="row" alignItems="center">
           {lampCell}
           {buttonGroup}
         </Box>

@@ -28,7 +28,7 @@ for (const skin of Object.keys(SKINS)) {
   const lampsBody = buildLampsSvg(snap, now).replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '')
   // The buttons, which the host draws in the editor theme's colors: here in the skin's greys, right-aligned on the lamps' row.
   const t = SKINS[skin]
-  let x = w - 20
+  let x = w
   let buttons = ''
   for (const label of ['⚙', 'Hurry up', 'Commit and push', 'Go ahead']) {
     const bw = label === '⚙' ? 16 : label.length * 4.4 + 14

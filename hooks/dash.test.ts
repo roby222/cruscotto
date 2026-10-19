@@ -34,6 +34,8 @@ describe('dash helpers', () => {
     expect(untilReset(new Date(90 * 60_000).toISOString(), 0)).toBe('1 h 30 min')
     expect(untilReset(new Date(5 * 3_600_000).toISOString(), 0)).toBe('5 h')
     expect(untilReset(new Date(3 * 86_400_000).toISOString(), 0)).toBe('3 d')
+    expect(untilReset(new Date(10_000).toISOString(), 0)).toBe('now') // under half a minute, and past
+    expect(untilReset(new Date(0).toISOString(), 60_000)).toBe('now')
   })
 
   test('buildSvg produce un svg con i valori', () => {

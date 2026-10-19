@@ -85,12 +85,12 @@ export const compactTokens = (n: number): string =>
 export const untilReset = (iso: string | undefined, now: number): string => {
   if (!iso) return '--'
   const ms = Date.parse(iso) - now
-  if (!(ms > 0)) return '0 min'
+  if (!(ms > 0)) return 'now'
   const m = Math.round(ms / 60000)
   const parts = m >= 1440
     ? [`${Math.floor(m / 1440)} d`, Math.floor((m % 1440) / 60) ? `${Math.floor((m % 1440) / 60)} h` : '']
     : [m >= 60 ? `${Math.floor(m / 60)} h` : '', m % 60 ? `${m % 60} min` : '']
-  return parts.filter(Boolean).join(' ') || '0 min'
+  return parts.filter(Boolean).join(' ') || 'now'
 }
 
 export const BURN_WINDOW_MS = 90 * 60 * 1000
@@ -270,7 +270,7 @@ export const buildSvg = (snap: Snap, now: number): string => {
       : { name: 'Range', frac: null, tone: rangeTone(r), value: spanText(r.msToEmpty), caption: 'runs out before reset' }
   const limits: Row[] = snap.limits.map((l): Row => {
     const left = leftOf(l)
-    return { name: limitLabel(l.kind), frac: left / 100, tone: leftTone(left), value: `${Math.round(left)}% left`, caption: `resets in ${untilReset(l.resetsAt, now)}` }
+    return { name: limitLabel(l.kind), frac: left / 100, tone: leftTone(left), value: `${Math.round(left)}% left`, caption: untilReset(l.resetsAt, now) === 'now' ? 'resets now' : `resets in ${untilReset(l.resetsAt, now)}` }
   })
   if (limits.length === 0) {
     limits.push({ name: 'Session 5 h', frac: null, tone: 'ok', value: 'n/a', caption: 'no data yet' }, { name: 'Weekly', frac: null, tone: 'ok', value: 'n/a', caption: 'no data yet' })
@@ -301,8 +301,9 @@ export const buildSvg = (snap: Snap, now: number): string => {
   // The tiles, then the odometer as a footnote on the right; the lamps live in their own Svg (buildLampsSvg),
   // drawn by the host on the buttons' row, so the strip's bottom row is lamps left, buttons right.
   const FOOT = 8 + rows * ROW
-  const H = FOOT + 12
-  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`
+  // The image ends where the last tile does (R), so tiles, odometer and the host's button row share one right edge.
+  const H = FOOT + 16
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${R} ${H}" width="${R}" height="${H}">`
 
   // Tiles: label on the row's top baseline, the live value 22 below, the caption 36 below, the bar at 44.
   const cell = (c: Row, x: number, y: number, w: number) => {
@@ -314,12 +315,13 @@ export const buildSvg = (snap: Snap, now: number): string => {
   cells.forEach((c, i) => cell(c, L + (i % cols) * COL, 8 + ROW * Math.floor(i / cols), COL - GAP))
 
   // One text run anchored at the right edge, so nothing can overlap: this session's tokens, then what they
-  // would have cost on an API key, in the ok color.
-  s += `<text x="${R}" y="${FOOT + 6}" text-anchor="end" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
+  // would have cost on an API key, two labelled values in one color.
+  s += `<text x="${R}" y="${FOOT + 8}" text-anchor="end" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
     + `<title>Tokens of this session, and their value at API prices (nothing is billed on a subscription plan)</title>`
-    + `<tspan font-size="7" font-weight="600" fill="${skin().muted}">TOKENS, THIS SESSION  </tspan>`
+    + `<tspan font-size="7" font-weight="600" fill="${skin().muted}">TOKENS  </tspan>`
     + `<tspan font-size="11" font-weight="700" fill="${skin().text}">${esc(millions(snap.trip))} M</tspan>`
-    + `<tspan font-size="11" font-weight="700" fill="${skin().ok}">  ${esc(usdAll(snap))}</tspan></text>`
+    + `<tspan font-size="7" font-weight="600" fill="${skin().muted}">    COST  </tspan>`
+    + `<tspan font-size="11" font-weight="700" fill="${skin().text}">${esc(usdAll(snap))}</tspan></text>`
 
   s += `</svg>`
   return s
@@ -328,8 +330,8 @@ export const buildSvg = (snap: Snap, now: number): string => {
 /** Width of the strip in viewBox units, and the lamps Svg's share of it: a Box of that width scales the lamps like the strip. */
 export const STRIP_W = 560
 export const LAMPS_W = 5 * LAMP_PITCH
-// The engine takes whole percentages only; 34% of 560 is 190.4, a scale 1% under the strip's.
-export const LAMPS_SHARE = `${Math.round((LAMPS_W / STRIP_W) * 100)}%`
+// The image is STRIP_W minus one gap wide; the engine takes whole percentages only, so the scale is within 1%.
+export const LAMPS_SHARE = `${Math.round((LAMPS_W / (STRIP_W - 20)) * 100)}%`
 
 /** The lamp row alone, for the host's button row: no width or height attributes, so it fills its Box. */
 export const buildLampsSvg = (snap: Snap, now: number): string =>
