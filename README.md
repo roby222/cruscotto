@@ -21,8 +21,9 @@ is the live part, a short caption, and the bar where there is a quantity.
 Under the tiles, the meter row: the rate meter and the spectrum on the
 left, two counters on the right: this session's tokens, in millions, and
 what they would have cost at API prices (nothing is billed on a Pro or Max
-plan). Hovering a meter gives its numbers. The bottom row has the lamps on the left and
-the buttons as one group on the right, the gear last.
+plan). The exact numbers behind the meters are in `/cruscotto`; the strip
+is an image in VS Code, so hovering shows nothing. The bottom row has the
+lamps on the left and the buttons as one group on the right, the gear last.
 
 The Range tile is a verdict, so it has no bar: at the pace of the last 90
 minutes, does the 5-hour window last to its reset? "12% spare, lasts to the
@@ -40,8 +41,8 @@ red at 5%; both thresholds are settings.
 
 Like the lamps of a car cluster: one state each, and none for what a bar
 already shows. Each has its word under it; off, the glyph is a dim outline;
-lit, glyph and word take its color, and hovering it tells why. Red means stop, amber means attention, green is
-information.
+lit, glyph and word take its color. Red means stop, amber means attention,
+green is information.
 
 | Lamp | Glyph | Lights when | Color |
 |---|---|---|---|

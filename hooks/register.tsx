@@ -62,15 +62,22 @@ export const register: Register = (on, options) => {
     const now = await $.clock.now()
     const five = e.rateLimits.find(r => r.kind === 'five_hour')
 
-    await update($, snapAtom, (s: Snap) => ({
+    // Mid-turn, each model call grows the context: that growth is a live sample for the rate meter and the
+    // spectrum's last column, replaced by the exact usage when the turn completes.
+    await update($, snapAtom, (s: Snap) => {
+      const grown = e.context.tokens != null && s.ctxTokens != null ? e.context.tokens - s.ctxTokens : 0
+      return {
       ...s,
+      samples: grown > 0 ? pushSample(s.samples, { t: now, tokens: grown, live: true }) : s.samples,
+      live: grown > 0 ? (s.live ?? 0) + grown : s.live ?? 0,
       ctxPct: e.context.percent ?? s.ctxPct,
       ctxTokens: e.context.tokens ?? s.ctxTokens,
       ctxWindow: e.context.window,
       limits: e.rateLimits.map(r => ({ kind: r.kind, pct: r.percentUsed, resetsAt: r.resetsAt })),
       burn: five ? pushReading(s.burn, { t: now, pct: five.percentUsed }) : s.burn,
       usd: e.cost?.usd ?? s.usd,
-    }))
+      }
+    })
 
     return next(e)
   })
@@ -103,13 +110,16 @@ export const register: Register = (on, options) => {
     }
 
     await update($, snapAtom, (s: Snap) => {
-      const samples = used > 0 ? pushSample(s.samples, { t: now, tokens: used }) : s.samples
+      // The live estimates of this turn give way to its real usage.
+      const settled = s.samples.filter(x => !x.live)
+      const samples = used > 0 ? pushSample(settled, { t: now, tokens: used }) : settled
 
       return {
         ...s,
         model: e.usage?.model ?? s.model,
         trip: s.trip + used,
         turns: used > 0 ? [...(s.turns ?? []), used].slice(-8) : s.turns ?? [],
+        live: 0,
         samples,
         cacheHit: e.usage && input > 0 ? e.usage.cache_read_input_tokens / input : s.cacheHit,
         lastSeconds: Math.round(e.durationMs / 1000),

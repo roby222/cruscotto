@@ -13,6 +13,7 @@ export const INITIAL: Snap = {
   usd: null,
   trip: 0,
   turns: [],
+  live: 0,
   samples: [],
   burn: [],
   cacheHit: null,
@@ -272,16 +273,22 @@ const vuMeter = (x: number, y: number, snap: Snap, now: number): string => {
 const VU_W = VU_SEGMENTS * 8 - 2
 
 /** A spectrum of the last eight turns: one column each, as tall as its tokens against the heaviest of the eight. */
-const spectrum = (x: number, y: number, turns: number[] | undefined): string => {
-  // A session that loaded before this field existed carries no turns yet.
-  const last = (turns ?? []).slice(-8)
+const spectrum = (x: number, y: number, turns: number[] | undefined, live = 0): string => {
+  // A session that loaded before these fields existed carries no turns yet. The turn in progress, if any,
+  // is the last column, an outline that grows with the context as the turn goes on.
+  const done = (turns ?? []).slice(live > 0 ? -7 : -8)
+  const last = live > 0 ? [...done, live] : done
   const top = Math.max(1, ...last)
-  const words = last.length ? last.map(t => compactTokens(t)).join(', ') : 'none yet'
-  let s = `<g><title>Tokens of the last ${last.length || 8} turns, oldest first: ${esc(words)}</title>`
+  const words = done.length ? done.map(t => compactTokens(t)).join(', ') : 'none yet'
+  const now = live > 0 ? `; in progress about ${compactTokens(live)}` : ''
+  let s = `<g><title>Tokens of the last ${done.length || 8} turns, oldest first: ${esc(words)}${esc(now)}</title>`
   for (let i = 0; i < 8; i++) {
     const t = last[i - (8 - last.length)]
     const h = t == null ? 1 : Math.max(1, Math.round((t / top) * 12))
-    s += `<rect x="${x + i * 7}" y="${y + 12 - h}" width="5" height="${h}" rx="1" fill="${t == null ? skin().track : skin().ok}"/>`
+    const isLive = live > 0 && i === 7
+    s += isLive
+      ? `<rect x="${x + i * 7 + 0.5}" y="${y + 12 - h + 0.5}" width="4" height="${Math.max(1, h - 1)}" rx="1" fill="none" stroke="${skin().ok}" stroke-width="1"/>`
+      : `<rect x="${x + i * 7}" y="${y + 12 - h}" width="5" height="${h}" rx="1" fill="${t == null ? skin().track : skin().ok}"/>`
   }
   return s + '</g>'
 }
@@ -351,7 +358,7 @@ export const buildSvg = (snap: Snap, now: number): string => {
   s += text(L, FOOT + 6, 'RATE', 7, skin().muted, 'start', 600)
   s += vuMeter(L, FOOT + 10, snap, now)
   s += text(L + VU_W + GAP, FOOT + 6, 'LAST TURNS', 7, skin().muted, 'start', 600)
-  s += spectrum(L + VU_W + GAP, FOOT + 10, snap.turns)
+  s += spectrum(L + VU_W + GAP, FOOT + 10, snap.turns, snap.live ?? 0)
 
   // One text run anchored at the right edge, so nothing can overlap: this session's tokens, then what they
   // would have cost on an API key, two labelled values in one color, on the meters' bottom line.
@@ -397,7 +404,8 @@ export const buildReport = (snap: Snap, now: number): string => {
     `context: ${snap.ctxPct ?? '--'}% (${snap.ctxTokens ?? '--'} of ${snap.ctxWindow ?? '--'} tokens), compaction at ${snap.compactPct != null ? Math.round(snap.compactPct) + '%' : '--'}`,
     ...snap.limits.map(l => `${l.kind}: used ${l.pct}%, left ${Math.round(leftOf(l))}%, resets in ${untilReset(l.resetsAt, now)} (${l.resetsAt ?? '--'})`),
     `tokens this session: ${snap.trip} (${millions(snap.trip)} M)`,
-    `rate: ${Math.round(ratePerMin(snap.samples, now))} tokens/min over the last 5 minutes`,
+    `rate: ${Math.round(ratePerMin(snap.samples, now))} tokens/min over the last 5 minutes (meter full scale ${VU_FULL})`,
+    `last turns: ${(snap.turns ?? []).join(', ') || 'none yet'}${snap.live ? `; in progress about ${Math.round(snap.live)}` : ''}`,
     `cost this session at API prices: ${snap.usd != null ? '$' + snap.usd.toFixed(4) : '--'}, cache ${snap.cacheHit != null ? Math.round(snap.cacheHit * 100) + '%' : '--'}`,
     `last turn: ${snap.lastSeconds ?? '--'} s, ${snap.lastTools} tools${snap.hasError ? ', ended in error' : ''}`,
     `lamps: ${lampWords(lamps(snap, now)).join(', ') || 'none lit'}; running now ${snap.toolsRunning} tools, ${snap.agents.length} agents`,
