@@ -67,7 +67,7 @@ test('i pulsanti inviano il prompt di risolvi101', async ($, on) => {
   })
 
   const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
-  await ui.press({ key: 'muoviti' })
+  await ui.press({ key: 'actions', link: { href: 'https://cruscotto/muoviti' } } as never)
   expect(sent).toEqual(['Speed up and parallelize where you can. Tell me why this is taking so long and how much time is left.'])
 })
 
