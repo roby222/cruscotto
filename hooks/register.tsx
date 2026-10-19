@@ -6,6 +6,19 @@ import { ACTIONS, parseButtons } from './actions'
 import type { Action } from './actions'
 import { INITIAL, LAMPS_SHARE, buildLampsSvg, buildLine, buildReport, buildSvg, lampWords, lamps, freshOf, pushReading, pushSample, settings, tokensOf } from './dash'
 
+/** Whether a tree another mod returned shows anything: the engine's empty band, bare boxes and blank strings do not. */
+const hasContent = (el: unknown): boolean => {
+  if (el == null || typeof el === 'boolean') return false
+  if (typeof el === 'string' || typeof el === 'number') return String(el).trim() !== ''
+  if (Array.isArray(el)) return el.some(hasContent)
+  const node = el as { type?: string; props?: { children?: unknown }; children?: unknown }
+  if (node.type === 'engine') return false
+  if (node.type === 'Box' || node.type === 'div' || node.type === 'Fragment' || node.type === undefined) {
+    return hasContent(node.props?.children ?? node.children)
+  }
+  return true
+}
+
 const snapAtom = atom({ plugin: 'cruscotto', key: 'snap' } as const, INITIAL)
 
 export const register: Register = (on, options) => {
@@ -144,9 +157,10 @@ export const register: Register = (on, options) => {
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     // Mods below in the chain draw first: whoever has something to show gets the band, and cruscotto
-    // takes it back when they are done. With nothing below, next(e) is the engine's own empty band.
+    // takes it back when they are done. With nothing below, next(e) is the engine's own empty band,
+    // possibly inside a frame a decorating mod drew around it.
     const below = await next(e)
-    if (below.type !== 'engine' || e.props.hasSurvey) return below
+    if (hasContent(below) || e.props.hasSurvey) return below
     // Read the state only when drawing: a read here subscribes the band to every state write.
     const snap = await read($, snapAtom)
 

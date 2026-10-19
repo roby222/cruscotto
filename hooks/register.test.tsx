@@ -102,6 +102,30 @@ const other = {
   },
 }
 
+// A mod that only frames whatever is beneath it, and one that passes while idle.
+const frame = {
+  name: 'frame',
+  register(on: On) {
+    on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+      const { Box } = $.ui.resolve(e)
+      return <Box borderStyle="round">{await next(e)}</Box>
+    })
+  },
+}
+const quiet = {
+  name: 'quiet',
+  register(on: On) {
+    on('ui.render', { component: 'AbovePrompt' }, async (_$, e, next) => next(e))
+  },
+}
+
+test('disegna quando sotto c\'è solo una cornice o un mod che passa', { plugins: [frame, quiet] }, async ($, on) => {
+  world(on)
+
+  const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
+  expect(await ui.find({ type: 'Svg' })).toBeDefined()
+})
+
 test('cede la banda a chi ha qualcosa da mostrare', { plugins: [other] }, async ($, on) => {
   world(on)
 
