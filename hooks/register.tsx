@@ -171,7 +171,11 @@ export const register: Register = (on, options) => {
         label={a.label}
         hotkey={a.hotkey || undefined}
         plain
-        onPress={() => void $.prompt.submit({ text: a.text, asUser: true }).catch((err: unknown) => $.ui.toast(`Prompt not sent: ${err instanceof Error ? err.message : String(err)}`))}
+        // A hook that refuses the prompt answers { drop } and the call resolves: only a fault rejects.
+        onPress={() => void $.prompt.submit({ text: a.text, asUser: true }).then(
+          r => r.drop && $.ui.toast(`Prompt not sent: ${r.drop}`),
+          (err: unknown) => $.ui.toast(`Prompt not sent: ${err instanceof Error ? err.message : String(err)}`),
+        )}
       />
     ))
     const isOpen = await read($, openAtom)

@@ -405,6 +405,21 @@ export const buildLine = (snap: Snap, now: number): string => {
 }
 
 /** Le letture grezze, per confrontarle col pannello Usage. */
+/** The range's arithmetic, to check the verdict by hand: the readings it used, the pace, the projection. */
+const rangeReport = (snap: Snap, now: number): string => {
+  const recent = snap.burn.filter(x => now - x.t <= BURN_WINDOW_MS)
+  const drop = recent.findLastIndex((x, i) => i > 0 && x.pct < (recent[i - 1]?.pct ?? x.pct) - 10)
+  const live = drop > 0 ? recent.slice(drop) : recent
+  const ago = (t: number) => `${Math.round((now - t) / 60000)} min ago`
+  const readings = live.map(x => `${x.pct}% used ${ago(x.t)}`).join(', ') || 'none'
+  const first = live[0]
+  const last = live[live.length - 1]
+  const pace = first && last && last.t > first.t ? ((last.pct - first.pct) / ((last.t - first.t) / 60000)).toFixed(2) : '--'
+  const r = range(snap, now)
+  const verdict = r.status === 'measuring' ? 'measuring' : r.status === 'lasts' ? `lasts, ${r.spare}% spare` : `empty in ${untilReset(new Date(r.msToEmpty).toISOString(), 0)}`
+  return `range: ${live.length} readings of the 5 h window in the last 90 min (${readings}); pace ${pace} points/min; ${verdict}${drop > 0 ? '; readings before a reset dropped' : ''}`
+}
+
 export const buildReport = (snap: Snap, now: number): string => {
   const lines = [
     `model: ${snap.model || '(no turn yet)'}`,
@@ -416,6 +431,7 @@ export const buildReport = (snap: Snap, now: number): string => {
     `cost this session at API prices: ${snap.usd != null ? '$' + snap.usd.toFixed(4) : '--'}, cache ${snap.cacheHit != null ? Math.round(snap.cacheHit * 100) + '%' : '--'}`,
     `last turn: ${snap.lastSeconds ?? '--'} s, ${snap.lastTools} tools${snap.hasError ? ', ended in error' : ''}`,
     `lamps: ${lampWords(lamps(snap, now)).join(', ') || 'none lit'}; running now ${snap.toolsRunning} tools, ${snap.agents.length} agents`,
+    rangeReport(snap, now),
   ]
   if (snap.limits.length === 0) lines.push('rate-limit windows: none reported (off a subscription, or no response yet)')
   return lines.join('\n')

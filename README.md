@@ -53,6 +53,9 @@ that mod passes.
 - **Hurry up**: speed up, parallelize, say why it is slow.
 - **⚙**: shows the cruscotto settings in place of the strip; **Done** closes them.
 
+When a hook refuses a button's prompt, a toast gives the reason instead of
+the prompt vanishing.
+
 Hotkeys `g`, `c`, `h` with the strip focused. Your own buttons: point the
 **Your buttons** setting at a Markdown file where each `## Label` heading is
 a button and the lines under it the prompt; they take the digits as hotkeys
@@ -71,7 +74,12 @@ give them the skin's greys, in VS Code's `settings.json`:
 
 ## Settings
 
-From the ⚙ button, or in `/config`, also shown once at install:
+From the ⚙ button, or in `/config`, also shown once at install. The ⚙
+panel lists only these rows and writes them where `/config` keeps them: a
+tick marks the current skin and On or Off, − and + move a threshold by 5
+between 0 and 100, and the file path is saved with Save. A change applies
+at once and the panel stays open until **Done**; a row your organization
+locks shows its value and no control.
 
 | Option | Default | What it does |
 |---|---|---|
@@ -105,3 +113,11 @@ claude plugin test <this folder>
 `hooks/register.tsx` is the hooks module, `hooks/dash.ts` the drawing and
 the thresholds, `hooks/actions.ts` the buttons, `types/index.d.ts` the
 state. The engine writes `.claude-plugin/types/` on load, for the editor.
+
+`claude plugin test` runs the tests against the engine itself: it mounts
+the band on a surface and presses its buttons by key. `hooks/dash.test.ts`
+covers the readings and the drawing, `hooks/register.test.tsx` the band
+and how it shares space with other mods, and `hooks/buttons.test.tsx`
+every button on the terminal, desktop and VS Code: the three prompts and
+their hotkeys, your own buttons from the file, the gear and each control
+of the settings panel.
