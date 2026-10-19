@@ -1,10 +1,10 @@
 # cruscotto
 
 A quiet instrument strip above the Claude Code prompt, in the spirit of a
-nineties night-lit dashboard: three thin bars, a row of six lamps, and
-three buttons for the prompts you send most often.
+nineties night-lit dashboard: a row of six lamps, four tiles with one live
+number each, and three buttons for the prompts you send most often.
 
-![The strip: the lamp row, the range sentence, total tokens, the three gauges](docs/skin-night.svg)
+![The strip: the lamp row and the odometer above four tiles, Context, Session 5 h, Range and Weekly](docs/skin-night.svg)
 
 ## What it shows
 
@@ -14,14 +14,16 @@ three buttons for the prompts you send most often.
 | Session 5 h | Share of the 5-hour rate-limit window left, and when it resets |
 | Weekly | Share of the 7-day window left, and when it resets; any other window the API reports gets its own bar |
 
-The header carries the lamp row, the range sentence and the total tokens
-counted, in millions, kept across sessions.
+Every tile has the same grammar: a small caps label, one large number that
+is the live part, a short caption, and the bar where there is a quantity.
+The header carries the lamp row and the odometer: the total tokens counted,
+in millions, kept across sessions.
 
-The range sentence is a verdict, so it has no bar: at the pace of the last
-90 minutes, does the 5-hour window last to its reset? "lasts to the reset,
-12% spare" means yes, and little to spare is the ideal, not a warning. "runs
-out in 1 h 20 min" means no: amber if that is 30 minutes or more before the
-reset, red if it is within 30 minutes from now.
+The Range tile is a verdict, so it has no bar: at the pace of the last 90
+minutes, does the 5-hour window last to its reset? "12% spare, lasts to the
+reset" means yes, and little to spare is the ideal, not a warning. "1 h 20
+min, runs out before reset" means no: amber if that is 30 minutes or more
+before the reset, red if it is within 30 minutes from now.
 
 The total sums input, output, cache-read and cache-write tokens of every
 turn.

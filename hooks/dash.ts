@@ -242,7 +242,7 @@ const GLYPHS: Record<LampKey, string> = {
 }
 
 /** Header blocks share one grammar: the value on the top line, a small caps label under it. */
-const LABEL_Y = 28
+const LABEL_Y = 32
 const label = (x: number, t: string, color: string, anchor = 'start'): string => text(x, LABEL_Y, t, 7, color, anchor, 600)
 
 const LAMP_PITCH = 32
@@ -273,7 +273,7 @@ export const fitReasons = (reasons: string[], max: number): string => {
   return rest ? `${kept.join(', ')}, +${rest}` : kept.join(', ')
 }
 
-type Row = { name: string; frac: number | null; tone: Tone; value: string; marker?: number | null }
+type Row = { name: string; frac: number | null; tone: Tone; value: string; caption: string; marker?: number | null }
 
 export const buildSvg = (snap: Snap, now: number): string => {
   const ctx = snap.ctxPct
@@ -281,62 +281,57 @@ export const buildSvg = (snap: Snap, now: number): string => {
   const ctxFrac = ctx != null ? ctx / 100 : null
   const ctxTone: Tone = ctxFrac == null ? 'ok' : ctxFrac >= compactAt - 0.05 ? 'bad' : ctxFrac >= compactAt - 0.2 ? 'warn' : 'ok'
 
-  // Griglia 2 x 2: contesto e autonomia sopra, i limiti a due a due sotto.
+  // One grammar for every block: small caps label (static), one large live value, a short caption, the bar where there is one.
   const r = range(snap, now)
-  // Range is a verdict, not a quantity: one sentence in the header, no bar.
-  const rangeText = r.status === 'measuring' ? 'measuring, needs 5 min of use'
-    : r.status === 'lasts' ? `lasts to the reset, ${r.spare}% spare`
-    : `runs out in ${spanText(r.msToEmpty)}`
-  const rangeColor = r.status === 'runsOut' && rangeTone(r) !== 'ok' ? toneColor(rangeTone(r)) : skin().muted
+  const rangeCell: Row = r.status === 'measuring'
+    ? { name: 'Range', frac: null, tone: 'ok', value: 'n/a', caption: 'measuring, 5 min of use' }
+    : r.status === 'lasts'
+      ? { name: 'Range', frac: null, tone: 'ok', value: `${r.spare}% spare`, caption: 'lasts to the reset' }
+      : { name: 'Range', frac: null, tone: rangeTone(r), value: spanText(r.msToEmpty), caption: 'runs out before reset' }
+  const limits: Row[] = snap.limits.map((l): Row => {
+    const left = leftOf(l)
+    return { name: limitLabel(l.kind), frac: left / 100, tone: leftTone(left), value: `${Math.round(left)}% left`, caption: `resets in ${untilReset(l.resetsAt, now)}` }
+  })
+  if (limits.length === 0) {
+    limits.push({ name: 'Session 5 h', frac: null, tone: 'ok', value: 'n/a', caption: 'no data yet' }, { name: 'Weekly', frac: null, tone: 'ok', value: 'n/a', caption: 'no data yet' })
+  }
+  // Context first, then the 5 h window with its range verdict beside it, then the other windows.
   const cells: Row[] = [
     {
       name: 'Context', frac: ctxFrac, tone: ctxTone, marker: compactAt,
-      value: ctx != null ? `${Math.round(ctx)}%, ${compactTokens(snap.ctxTokens ?? 0)} of ${compactTokens(snap.ctxWindow ?? 0)}` : 'no data',
+      value: ctx != null ? `${Math.round(ctx)}%` : 'n/a',
+      caption: ctx != null ? `${compactTokens(snap.ctxTokens ?? 0)} of ${compactTokens(snap.ctxWindow ?? 0)}` : 'no data yet',
     },
+    limits[0],
+    rangeCell,
+    ...limits.slice(1),
   ]
-  const limits: Row[] = snap.limits.map((l): Row => {
-    const left = leftOf(l)
-    return {
-      name: limitLabel(l.kind), frac: left / 100, tone: leftTone(left),
-      value: `${Math.round(left)}% left, resets in ${untilReset(l.resetsAt, now)}`,
-    }
-  })
-  if (limits.length === 0) {
-    limits.push({ name: 'Session 5 h', frac: null, tone: 'ok', value: 'no data yet' }, { name: 'Weekly', frac: null, tone: 'ok', value: 'no data yet' })
-  }
-  cells.push(...limits)
 
   const W = 560
   const L = 0
   const R = W
-  const GAP = 24
-  // One row of tiles; four windows fall back to two by two, so no tile is ever left alone in a row.
-  const cols = cells.length === 4 ? 2 : Math.min(3, cells.length)
+  const GAP = 20
+  // Up to four tiles on a row; five or six go three by three, so no row holds one tile alone.
+  const cols = cells.length <= 4 ? cells.length : 3
   const COL = (R - L - GAP * (cols - 1)) / cols
-  const ROW = 36
+  const ROW = 60
   const rows = Math.ceil(cells.length / cols)
-  const H = 42 + rows * ROW
+  const H = 52 + rows * ROW
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`
 
-  // Header, left to right by urgency: the lamps, the range verdict, the odometer. Every block is a value over a small caps label.
-  let textX = L
-  if (settings.lamps) {
-    const row = lampRow(L, 3, lamps(snap, now))
-    s += row.svg
-    textX = L + row.width + 10
-  }
-  s += text(textX, 15, rangeText, 12, rangeColor)
-  s += label(textX, 'RANGE', skin().muted)
-  s += text(R, 16, `${millions(snap.total)} M`, 14, skin().ok, 'end', 700)
+  // Header on two baselines: glyphs and the odometer value centred on y 13, the small caps on y 32.
+  if (settings.lamps) s += lampRow(L, 6, lamps(snap, now)).svg
+  s += text(R, 18, `${millions(snap.total)} M`, 14, skin().text, 'end', 700)
   s += label(R, 'TOKENS, ALL SESSIONS', skin().muted, 'end')
 
-  // Tiles share the header's grammar: caps label, value, then the bar.
-  const cell = (r: Row, x: number, y: number, w: number) => {
-    s += text(x, y, r.name.toUpperCase(), 7, skin().muted, 'start', 600)
-    s += text(x, y + 15, r.value, 12, skin().text)
-    s += bar(x, y + 21, w, r.frac, r.tone, r.marker)
+  // Tiles: label on the row's top baseline, the live value 22 below, the caption 36 below, the bar at 44.
+  const cell = (c: Row, x: number, y: number, w: number) => {
+    s += text(x, y, c.name.toUpperCase(), 7, skin().muted, 'start', 600)
+    s += text(x, y + 22, c.value, 18, c.tone === 'ok' ? skin().text : toneColor(c.tone), 'start', 700)
+    s += text(x, y + 36, c.caption, 9, skin().muted)
+    if (c.frac != null || c.marker != null) s += bar(x, y + 44, w, c.frac, c.tone, c.marker)
   }
-  cells.forEach((r, i) => cell(r, L + (i % cols) * (COL + GAP), 46 + ROW * Math.floor(i / cols), COL))
+  cells.forEach((c, i) => cell(c, L + (i % cols) * (COL + GAP), 56 + ROW * Math.floor(i / cols), COL))
 
   s += `</svg>`
   return s
