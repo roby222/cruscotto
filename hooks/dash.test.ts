@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { INITIAL, buildLampsSvg, buildLine, buildSvg, freshOf, lamp, vuLit, lampWords, lamps, leftTone, limitLabel, millions, pushReading, range, rangeTone, pushSample, ratePerMin, rateMax, SKINS, settings, shortModel, tokensOf, untilReset } from './dash'
+import { INITIAL, buildLampsSvg, buildLine, buildSvg, freshOf, lamp, vuLit, lampWords, lamps, leftTone, limitLabel, millions, pushReading, range, rangeTone, pushSample, ratePerMin, SKINS, settings, tokensOf, untilReset } from './dash'
 
 describe('dash helpers', () => {
   test('freshOf lascia fuori le letture dalla cache', () => {
@@ -21,15 +21,7 @@ describe('dash helpers', () => {
     expect(ratePerMin(s, now)).toBe(200_000)
   })
 
-  test('rateMax sceglie il fondo scala', () => {
-    expect(rateMax(0)).toBe(10_000)
-    expect(rateMax(90_000)).toBe(500_000)
-    expect(rateMax(1e12)).toBe(20_000_000)
-  })
-
-  test('shortModel e millions', () => {
-    expect(shortModel('claude-sonnet-5-5')).toBe('Sonnet 5.5')
-    expect(shortModel('')).toBe('unknown model')
+  test('millions', () => {
     expect(millions(12_345_678)).toBe('12.346')
   })
 
@@ -76,16 +68,21 @@ describe('dash helpers', () => {
     // Nove minuti prima del reset non sono un allarme; entro 30 minuti da adesso sì.
     expect(rangeTone({ status: 'runsOut', msToEmpty: 117 * 60_000, msToReset: 126 * 60_000 })).toBe('ok')
     expect(rangeTone({ status: 'runsOut', msToEmpty: 20 * 60_000, msToReset: 126 * 60_000 })).toBe('bad')
+    expect(rangeTone({ status: 'runsOut', msToEmpty: 20 * 60_000, msToReset: 25 * 60_000 })).toBe('ok') // empties 5 min before the refill: fine
+    // a reset inside the 90 minutes restarts the pace from the drop
+    const afterReset = { ...INITIAL, limits: [{ kind: 'five_hour', pct: 40, resetsAt: new Date(now + 4 * h).toISOString() }],
+      burn: [{ t: now - 80 * 60_000, pct: 80 }, { t: now - 70 * 60_000, pct: 10 }, { t: now, pct: 40 }] }
+    expect(range(afterReset, now).status).toBe('runsOut')
     // 5 punti in un'ora: al reset tra 2 h siamo all'80%, ne avanza il 20.
     burn = pushReading([], { t: now - h, pct: 65 })
     burn = pushReading(burn, { t: now, pct: 70 })
     expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'lasts', spare: 20 })
     expect(buildSvg({ ...INITIAL, limits, burn }, now).includes('20% spare')).toBe(true)
     expect(lamp({ ...INITIAL, limits, burn }, now).tone).toBe('ok') // reaching the reset is fine, whatever is left
-    // Dopo un reset la quota scende: nessuna proiezione, avanza quel che resta.
+    // Dopo un reset la quota scende: la lettura prima del reset non conta, si ricomincia a misurare.
     burn = pushReading([], { t: now - h, pct: 80 })
     burn = pushReading(burn, { t: now, pct: 10 })
-    expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'lasts', spare: 90 })
+    expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'measuring' })
   })
 
   test('la spia si accende per gradi', () => {
@@ -114,10 +111,9 @@ describe('dash helpers', () => {
     expect(vuLit(900_000)).toBe(10)
     const hot = { ...INITIAL, samples: [{ t: now - 60_000, tokens: 500_000 }], turns: [1_000, 48_000, 12_000] }
     const svg = buildSvg(hot, now)
-    expect(svg.includes('100 k fresh tokens/min over the last 5 minutes')).toBe(true)
-    expect(svg.includes('Tokens of the last 3 turns, oldest first: 1 k, 48 k, 12 k')).toBe(true)
-    expect(buildSvg(INITIAL, now).includes('oldest first: none yet')).toBe(true)
-    expect(buildSvg({ ...hot, live: 7_000 }, now).includes('in progress about 7 k')).toBe(true)
+    expect(svg.includes('TOKENS / MIN')).toBe(true)
+    expect(svg.includes('LAST TURNS')).toBe(true)
+    expect(buildSvg({ ...hot, live: 7_000 }, now).includes('stroke-opacity')).toBe(true) // the in-progress column pulses; it exists only during a turn
     // the meter moves only while a turn runs
     expect(buildSvg(hot, now).includes('<animate')).toBe(false)
     expect(buildSvg(hot, now, true).includes('<animate')).toBe(true)
@@ -146,8 +142,8 @@ describe('dash helpers', () => {
     Object.assign(settings, { coldCacheBelow: 50 })
     // the odometer shows this session's API value
     expect(buildSvg(busy, now).includes('$12.00')).toBe(true)
-    // the terminal line carries the words; the svg carries the tooltips
+    // the terminal line and the lamps svg carry the words
     expect(buildLine(busy, now).includes('TOOLS 3')).toBe(true)
-    expect(buildLampsSvg(busy, now).includes('<title>3 tool calls running</title>')).toBe(true)
+    expect(buildLampsSvg(busy, now).includes('TOOLS')).toBe(true)
   })
 })

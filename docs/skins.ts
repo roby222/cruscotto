@@ -1,4 +1,4 @@
-// Draws one sample per skin into docs/: `node docs/skins.ts` (Node 22.6+ strips the types).
+// Draws one sample per skin into docs/: `node docs/skins.ts` (Node 22.18+ runs the types as they are).
 import { writeFileSync } from 'node:fs'
 import { INITIAL, SKINS, buildLampsSvg, buildSvg, settings } from '../hooks/dash.ts'
 

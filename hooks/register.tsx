@@ -11,6 +11,9 @@ const snapAtom = atom({ plugin: 'cruscotto', key: 'snap' } as const, INITIAL)
 export const register: Register = (on, options) => {
   Object.assign(settings, options)
   let tools = 0
+  // True from the person's prompt to its turn.complete: only then does context growth belong to a turn in progress.
+  let turning = false
+  let ticking = false
   // The person's own buttons, re-read at each prompt: edits land at the next prompt, not on every redraw.
   let extra: Action[] = []
   const buttonsFile = typeof options.buttonsFile === 'string' ? options.buttonsFile : ''
@@ -20,7 +23,10 @@ export const register: Register = (on, options) => {
     await $.command.register({ name: 'cruscotto', description: 'Raw cruscotto readings, to compare with the Usage panel' })
     if (buttonsFile) extra = parseButtons(await $.fs.read(buttonsFile).catch(() => ''))
     // "resets in", the range and the rate meter move with the clock, not with a state write; 5 s keeps the meter alive.
-    $.clock.every(5_000, () => $.ui.invalidate('ui.render'))
+    if (!ticking) {
+      ticking = true
+      $.clock.every(5_000, () => $.ui.invalidate('ui.render'))
+    }
 
     return next(e)
   })
@@ -28,6 +34,7 @@ export const register: Register = (on, options) => {
   on('turn.start', async ($, e, next) => {
     const id = e.agentId
     if (id) await update($, snapAtom, (s: Snap) => ({ ...s, agents: s.agents.includes(id) ? s.agents : [...s.agents, id] }))
+    else turning = true
 
     return next(e)
   })
@@ -40,7 +47,8 @@ export const register: Register = (on, options) => {
 
   on('prompt.submit', async ($, e, next) => {
     tools = 0
-    await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0 }))
+    turning = true
+    await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0, live: 0 }))
     if (buttonsFile) extra = parseButtons(await $.fs.read(buttonsFile).catch(() => ''))
 
     return next(e)
@@ -65,7 +73,7 @@ export const register: Register = (on, options) => {
     // Mid-turn, each model call grows the context: that growth is a live sample for the rate meter and the
     // spectrum's last column, replaced by the exact usage when the turn completes.
     await update($, snapAtom, (s: Snap) => {
-      const grown = e.context.tokens != null && s.ctxTokens != null ? e.context.tokens - s.ctxTokens : 0
+      const grown = turning && e.context.tokens != null && s.ctxTokens != null ? e.context.tokens - s.ctxTokens : 0
       return {
       ...s,
       samples: grown > 0 ? pushSample(s.samples, { t: now, tokens: grown, live: true }) : s.samples,
@@ -86,6 +94,7 @@ export const register: Register = (on, options) => {
     const now = await $.clock.now()
     const used = e.usage ? tokensOf(e.usage) : 0
     const fresh = e.usage ? freshOf(e.usage) : 0
+    if (!e.agentId) turning = false
 
     // A subagent's turn: it leaves the AGENTS lamp and its tokens count, nothing else is the person's turn.
     if (e.agentId) {

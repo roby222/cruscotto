@@ -3,7 +3,8 @@
 An instrument strip above the Claude Code prompt, in the VS Code extension
 and the desktop app: how much context and quota you have left, how fast
 Claude is working, what the session costs, and buttons for the prompts you
-send most often. In the terminal it is one line of text.
+send most often. In the terminal it is one line of text with the same
+buttons.
 
 ![The strip: four tiles, Context, Session 5 h, Range and Weekly; under them the tokens-per-minute meter, the last-turns spectrum and the session's tokens and cost; the lamps and the buttons at the bottom](docs/skin-night.svg)
 
@@ -23,7 +24,8 @@ send most often. In the terminal it is one line of text.
 | Range | At the pace of the last 90 minutes, does the 5-hour window last to its reset? A verdict: little to spare is the ideal, amber or red only when it runs out early |
 | Weekly | Share of the 7-day window left, and when it resets |
 
-Bars turn amber at 20% left and red at 5%; both are settings.
+Quota bars turn amber at 20% left and red at 5%, both settings; Context
+colors itself from its compaction tick, drawn once the engine has reported it.
 
 | Meter | Reading |
 |---|---|

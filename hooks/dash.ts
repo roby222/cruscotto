@@ -1,7 +1,6 @@
 import type { Limit, Reading, Sample, Snap } from '../types'
 
 export const WINDOW_MS = 5 * 60 * 1000
-export const RATE_STEPS = [10_000, 50_000, 100_000, 500_000, 1_000_000, 5_000_000, 20_000_000]
 
 export const INITIAL: Snap = {
   model: '',
@@ -68,19 +67,9 @@ export const pushSample = (samples: Sample[], s: Sample): Sample[] =>
 
 /** Token al minuto sugli ultimi 5 minuti. */
 export const ratePerMin = (samples: Sample[], now: number): number => {
-  const live = samples.filter(x => now - x.t <= WINDOW_MS)
+  const live = samples.filter(x => x.t <= now && now - x.t <= WINDOW_MS)
   const sum = live.reduce((a, x) => a + x.tokens, 0)
   return sum / (WINDOW_MS / 60000)
-}
-
-export const rateMax = (rate: number): number =>
-  RATE_STEPS.find(s => s >= rate * 1.15) ?? RATE_STEPS[RATE_STEPS.length - 1]
-
-export const shortModel = (id: string): string => {
-  const m = /claude-([a-z]+)-(\d+)(?:-(\d+))?/.exec(id)
-  if (!m) return id ? id.slice(0, 16) : 'unknown model'
-  const name = m[1][0].toUpperCase() + m[1].slice(1)
-  return `${name} ${m[2]}${m[3] ? '.' + m[3] : ''}`
 }
 
 export const millions = (tokens: number): string => (tokens / 1_000_000).toFixed(3)
@@ -112,7 +101,10 @@ export type Range =
 
 /** Autonomia della finestra 5 h: a questo ritmo, finisce prima del reset? */
 export const range = (snap: Snap, now: number): Range => {
-  const live = snap.burn.filter(x => now - x.t <= BURN_WINDOW_MS)
+  const recent = snap.burn.filter(x => now - x.t <= BURN_WINDOW_MS)
+  // A reading lower than the one before it means the window reset: the pace starts over from there.
+  const drop = recent.findLastIndex((x, i) => i > 0 && x.pct < recent[i - 1].pct)
+  const live = drop > 0 ? recent.slice(drop) : recent
   if (live.length < 2) return { status: 'measuring' }
   const first = live[0]
   const last = live[live.length - 1]
@@ -133,9 +125,9 @@ export const SOON_MS = 30 * 60 * 1000
 
 /** The Range color, shared by its bar and the lamp: red if empty within 30 min, amber if empty 30 min or more before the reset. Reaching the reset is fine however little is left: the reset is the refill. */
 export const rangeTone = (r: Range): Tone =>
-  r.status === 'runsOut'
-    ? r.msToEmpty < SOON_MS ? 'bad' : r.msToReset != null && r.msToReset - r.msToEmpty >= SOON_MS ? 'warn' : 'ok'
-    : 'ok'
+  r.status !== 'runsOut' || (r.msToReset != null && r.msToReset - r.msToEmpty < SOON_MS)
+    ? 'ok'
+    : r.msToEmpty < SOON_MS ? 'bad' : 'warn'
 
 const spanText = (ms: number): string => untilReset(new Date(ms).toISOString(), 0)
 
@@ -201,19 +193,16 @@ const bar = (x: number, y: number, w: number, frac: number | null, tone: Tone, m
 }
 
 export type LampKey = 'failed' | 'cold' | 'tools' | 'agents'
-export type Lamp = { key: LampKey; on: boolean; tone: Tone; count?: number; word: string; title: string }
+export type Lamp = { key: LampKey; on: boolean; tone: Tone; count?: number; word: string }
 
 /** The four lamps: one state each, none for what a bar or a counter already shows. */
 export const lamps = (snap: Snap, _now: number): Lamp[] => {
   const cache = snap.cacheHit != null ? Math.round(snap.cacheHit * 100) : null
   return [
-    { key: 'failed', on: snap.hasError, tone: 'bad', word: 'FAILED', title: snap.hasError ? 'The last turn ended in error' : 'Lights red when a turn ends in error' },
-    {
-      key: 'cold', on: cache != null && cache < settings.coldCacheBelow, tone: 'warn', word: 'COLD',
-      title: `Cache hit ${cache != null ? cache + '%' : 'unknown'} on the last turn; lights amber under ${settings.coldCacheBelow}%`,
-    },
-    { key: 'tools', on: snap.toolsRunning > 0, tone: 'ok', count: snap.toolsRunning, word: 'TOOLS', title: `${snap.toolsRunning} tool call${snap.toolsRunning === 1 ? '' : 's'} running` },
-    { key: 'agents', on: snap.agents.length > 0, tone: 'ok', count: snap.agents.length, word: 'AGENTS', title: `${snap.agents.length} subagent${snap.agents.length === 1 ? '' : 's'} running` },
+    { key: 'failed', on: snap.hasError, tone: 'bad', word: 'FAILED' },
+    { key: 'cold', on: cache != null && cache < settings.coldCacheBelow, tone: 'warn', word: 'COLD' },
+    { key: 'tools', on: snap.toolsRunning > 0, tone: 'ok', count: snap.toolsRunning, word: 'TOOLS' },
+    { key: 'agents', on: snap.agents.length > 0, tone: 'ok', count: snap.agents.length, word: 'AGENTS' },
   ]
 }
 
@@ -238,18 +227,18 @@ const label = (x: number, y: number, t: string, color: string, anchor = 'start')
 
 const LAMP_PITCH = 32
 
-/** The lamp row: one block per lamp, the glyph over its word, the count as a badge on the glyph's corner, a tooltip. */
-const lampRow = (x: number, y: number, list: Lamp[]): { svg: string; width: number } => {
+/** The lamp row: one block per lamp, the glyph over its word, the count as a badge on the glyph's corner. */
+const lampRow = (x: number, y: number, list: Lamp[]): string => {
   let s = ''
   list.forEach((l, i) => {
     // The first word, centred on its glyph, starts on the column edge rather than its glyph doing so.
     const cx = x + i * LAMP_PITCH + LAMP_PITCH / 2 - 4
     const color = l.on ? toneColor(l.tone) : skin().lampOff
-    s += `<g transform="translate(${f1(cx - 7)} ${y})"><title>${esc(l.title)}</title>${GLYPHS[l.key].replaceAll('COLOR', color)}</g>`
+    s += `<g transform="translate(${f1(cx - 7)} ${y})">${GLYPHS[l.key].replaceAll('COLOR', color)}</g>`
     if (l.on && l.count != null) s += text(cx + 9, y + 5, String(l.count), 8, color, 'start', 700)
     s += label(cx, y + 26, l.word, l.on ? toneColor(l.tone) : skin().muted, 'middle')
   })
-  return { svg: s, width: list.length * LAMP_PITCH }
+  return s
 }
 
 /** Full scale of the rate meter: fresh tokens per minute, cache reads excluded. */
@@ -270,7 +259,7 @@ const vuMeter = (x: number, y: number, snap: Snap, now: number, working: boolean
   const peak = Math.max(...[0, 5, 10, 15, 20].map(sec => vuLit(ratePerMin(snap.samples, now - sec * 1000))))
   // A throughput meter, not an alarm: the strip's amber and red mean attention and stop, and a fast turn is neither.
   const color = (i: number) => (i < 8 ? skin().ok : skin().text)
-  let s = `<g><title>${esc(compactTokens(rate))} fresh tokens/min over the last 5 minutes; full scale ${esc(compactTokens(VU_FULL))}</title>`
+  let s = '<g>'
   for (let i = 0; i < VU_SEGMENTS; i++) {
     const sx = x + i * 8
     if (i < lit) {
@@ -294,9 +283,7 @@ const spectrum = (x: number, y: number, turns: number[] | undefined, live = 0): 
   const done = (turns ?? []).slice(live > 0 ? -7 : -8)
   const last = live > 0 ? [...done, live] : done
   const top = Math.max(1, ...last)
-  const words = done.length ? done.map(t => compactTokens(t)).join(', ') : 'none yet'
-  const now = live > 0 ? `; in progress about ${compactTokens(live)}` : ''
-  let s = `<g><title>Tokens of the last ${done.length || 8} turns, oldest first: ${esc(words)}${esc(now)}</title>`
+  let s = '<g>'
   for (let i = 0; i < 8; i++) {
     const t = last[i - (8 - last.length)]
     const h = t == null ? 1 : Math.max(1, Math.round((t / top) * 12))
@@ -315,7 +302,8 @@ export const buildSvg = (snap: Snap, now: number, working = false): string => {
   const ctx = snap.ctxPct
   const compactAt = snap.compactPct != null ? snap.compactPct / 100 : 0.8
   const ctxFrac = ctx != null ? ctx / 100 : null
-  const ctxTone: Tone = ctxFrac == null ? 'ok' : ctxFrac >= compactAt - 0.05 ? 'bad' : ctxFrac >= compactAt - 0.2 ? 'warn' : 'ok'
+  // Until the engine has told where auto-compaction sits, no tick and no amber: a guess would mislead.
+  const ctxTone: Tone = ctxFrac == null || snap.compactPct == null ? 'ok' : ctxFrac >= compactAt - 0.05 ? 'bad' : ctxFrac >= compactAt - 0.2 ? 'warn' : 'ok'
 
   // One grammar for every block: small caps label (static), one large live value, a short caption, the bar where there is one.
   const r = range(snap, now)
@@ -334,7 +322,7 @@ export const buildSvg = (snap: Snap, now: number, working = false): string => {
   // Context first, then the 5 h window with its range verdict beside it, then the other windows.
   const cells: Row[] = [
     {
-      name: 'Context', frac: ctxFrac, tone: ctxTone, marker: compactAt,
+      name: 'Context', frac: ctxFrac, tone: ctxTone, marker: snap.compactPct != null ? compactAt : null,
       value: ctx != null ? `${Math.round(ctx)}%` : 'n/a',
       caption: ctx != null ? `${compactTokens(snap.ctxTokens ?? 0)} of ${compactTokens(snap.ctxWindow ?? 0)}` : 'no data yet',
     },
@@ -379,7 +367,6 @@ export const buildSvg = (snap: Snap, now: number, working = false): string => {
   // One text run anchored at the right edge, so nothing can overlap: this session's tokens, then what they
   // would have cost on an API key, two labelled values in one color, on the meters' bottom line.
   s += `<text x="${R}" y="${FOOT + 21}" text-anchor="end" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
-    + `<title>Tokens of this session, and their value at API prices (nothing is billed on a subscription plan)</title>`
     + `<tspan font-size="7" font-weight="600" fill="${skin().muted}">TOKENS</tspan>`
     + `<tspan dx="3" font-size="11" font-weight="700" fill="${skin().text}">${esc(millions(snap.trip))} M</tspan>`
     + `<tspan dx="12" font-size="7" font-weight="600" fill="${skin().muted}">COST</tspan>`
@@ -397,7 +384,7 @@ export const LAMPS_SHARE = `${Math.round((LAMPS_W / (STRIP_W - 20)) * 100)}%`
 
 /** The lamp row alone, for the host's button row: no width or height attributes, so it fills its Box. */
 export const buildLampsSvg = (snap: Snap, now: number): string =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${LAMPS_W} 36">${lampRow(0, 2, lamps(snap, now)).svg}</svg>`
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${LAMPS_W} 36">${lampRow(0, 2, lamps(snap, now))}</svg>`
 
 /** This session's API-price value as a dollar figure. */
 export const usdAll = (snap: Snap): string => `$${(snap.usd ?? 0).toFixed(2)}`

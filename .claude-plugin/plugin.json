@@ -26,13 +26,13 @@
     "warnAt": {
       "type": "number",
       "title": "Amber threshold (%)",
-      "description": "A bar turns amber, and the lamp with it, when this share of its window or less is left.",
+      "description": "A quota bar turns amber when this share of its window or less is left.",
       "default": 20
     },
     "badAt": {
       "type": "number",
       "title": "Red threshold (%)",
-      "description": "A bar turns red, and the lamp with it, when this share of its window or less is left.",
+      "description": "A quota bar turns red when this share of its window or less is left.",
       "default": 5
     },
     "lamps": {

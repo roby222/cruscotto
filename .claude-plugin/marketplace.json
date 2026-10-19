@@ -7,8 +7,8 @@
     {
       "name": "cruscotto",
       "source": "./",
-      "description": "Instrument strip above the prompt: context, range, 5-hour and weekly gauges, check-engine lamp, three prompt buttons."
+      "description": "Instrument strip above the prompt: context, 5-hour and weekly limits, range to the reset, a tokens-per-minute meter, the last turns, the session's tokens and cost, four lamps and prompt buttons."
     }
   ],
-  "description": "cruscotto: a nineties instrument strip above the Claude Code prompt"
+  "description": "cruscotto: an instrument strip above the Claude Code prompt"
 }
