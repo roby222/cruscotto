@@ -373,7 +373,7 @@ export const buildSvg = (snap: Snap, now: number, working = false): string => {
   cells.forEach((c, i) => cell(c, L + (i % cols) * COL, 8 + ROW * Math.floor(i / cols), COL - GAP))
 
   // Meters share the tiles' grammar: small caps label on the row's baseline, the instrument under it.
-  s += text(L, FOOT + 6, 'RATE', 7, skin().muted, 'start', 600)
+  s += text(L, FOOT + 6, 'TOKENS / MIN', 7, skin().muted, 'start', 600)
   s += vuMeter(L, FOOT + 10, snap, now, working)
   s += text(L + VU_W + GAP, FOOT + 6, 'LAST TURNS', 7, skin().muted, 'start', 600)
   s += spectrum(L + VU_W + GAP, FOOT + 10, snap.turns, snap.live ?? 0)

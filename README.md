@@ -13,7 +13,7 @@ often. Flat, sans, no chrome, readable at a glance.
 | Context | How full the context window is, with a tick at the auto-compaction threshold |
 | Session 5 h | Share of the 5-hour rate-limit window left, and when it resets |
 | Weekly | Share of the 7-day window left, and when it resets; any other window the API reports gets its own bar |
-| Rate | A ten-segment VU meter of the fresh tokens per minute over the last 5 minutes: input, output and cache writes, not the cache reads that re-read the whole context at every call. Full scale 60 k/min, the top two segments in the text color; the outlined segment is the peak of the last 20 s. It is a throughput meter, not an alarm: a full meter means fast work, and whether the pace is a problem is Range's call. While a turn runs the engine reports no tokens, so a wave of light runs over the meter instead |
+| Tokens / min | A ten-segment VU meter of the fresh tokens per minute over the last 5 minutes: input, output and cache writes, not the cache reads that re-read the whole context at every call. Full scale 60 k/min, the top two segments in the text color; the outlined segment is the peak of the last 20 s. It is a throughput meter, not an alarm: a full meter means fast work, and whether the pace is a problem is Range's call. While a turn runs the engine reports no tokens, so a wave of light runs over the meter instead |
 | Last turns | A spectrum of the last eight turns, one column each, as tall as its tokens against the heaviest of the eight |
 
 Every tile has the same grammar: a small caps label, one large number that
