@@ -366,10 +366,10 @@ export const buildSvg = (snap: Snap, now: number): string => {
   // would have cost on an API key, two labelled values in one color, on the meters' bottom line.
   s += `<text x="${R}" y="${FOOT + 21}" text-anchor="end" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
     + `<title>Tokens of this session, and their value at API prices (nothing is billed on a subscription plan)</title>`
-    + `<tspan font-size="7" font-weight="600" fill="${skin().muted}">TOKENS  </tspan>`
-    + `<tspan font-size="11" font-weight="700" fill="${skin().text}">${esc(millions(snap.trip))} M</tspan>`
-    + `<tspan font-size="7" font-weight="600" fill="${skin().muted}">    COST  </tspan>`
-    + `<tspan font-size="11" font-weight="700" fill="${skin().text}">${esc(usdAll(snap))}</tspan></text>`
+    + `<tspan font-size="7" font-weight="600" fill="${skin().muted}">TOKENS</tspan>`
+    + `<tspan dx="3" font-size="11" font-weight="700" fill="${skin().text}">${esc(millions(snap.trip))} M</tspan>`
+    + `<tspan dx="12" font-size="7" font-weight="600" fill="${skin().muted}">COST</tspan>`
+    + `<tspan dx="3" font-size="11" font-weight="700" fill="${skin().text}">${esc(usdAll(snap))}</tspan></text>`
 
   s += `</svg>`
   return s
