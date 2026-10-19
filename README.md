@@ -8,17 +8,10 @@ buttons for the prompts you send most often.
 
 ## Install
 
-In a Claude Code session, two commands:
-
 ```
 /plugin marketplace add roby222/cruscotto
 /plugin install cruscotto@cruscotto
 ```
-
-From a shell, one: `claude plugin install cruscotto --marketplace
-roby222/cruscotto`, which adds the marketplace on the way. In the desktop
-app: + next to the prompt, Plugins, Add marketplace `roby222/cruscotto`, Add
-plugin. Pick the user scope and the strip is there.
 
 ## What it shows
 
