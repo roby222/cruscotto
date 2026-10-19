@@ -1,7 +1,7 @@
 # cruscotto
 
 A quiet instrument strip above the Claude Code prompt: four tiles with one
-live number each, five lamps, and buttons for the prompts you send most
+live number each, four lamps, and buttons for the prompts you send most
 often. Flat, sans, no chrome, readable at a glance.
 
 ![The strip: four tiles, Context, Session 5 h, Range and Weekly, the session's tokens and API value under them, and the lamp row at the bottom left](docs/skin-night.svg)
@@ -46,7 +46,6 @@ information.
 | Cold | snowflake | the cache hit of the last turn is under 50%: the context is being paid at full price, as after a compaction | amber |
 | Tools | wrench, with a count | tool calls are running right now | green |
 | Agents | two people, with a count | subagents are running right now | green |
-| Turbo | lightning bolt | the token rate of the last 5 minutes reaches 200 k/min | green |
 
 In the terminal, lit lamps are words in the line: `TOOLS 2, COLD`.
 `/cruscotto` lists them too.
@@ -108,7 +107,6 @@ plugin's options live; the same screen appears once at install.
 | Red threshold | 5 | The same for red |
 | Lamps | on | Show the lamp row |
 | Cold cache lamp | 50 | Cache hit share under which the cold lamp lights |
-| Turbo lamp | 200000 | Tokens per minute that light the turbo lamp; 0 turns it off |
 | Prompt buttons | on | Show the three built-in prompt buttons |
 | Your buttons | none | A Markdown file with your own buttons, see above |
 

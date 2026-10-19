@@ -38,7 +38,7 @@ export const SKINS: Record<string, Skin> = {
 }
 
 /** The userConfig values; `register` copies the plugin's options over these defaults. */
-export const settings = { skin: 'night', warnAt: 20, badAt: 5, lamps: true, coldCacheBelow: 50, turboAt: 200000 }
+export const settings = { skin: 'night', warnAt: 20, badAt: 5, lamps: true, coldCacheBelow: 50 }
 const skin = (): Skin => SKINS[settings.skin] ?? SKINS.night
 const FONT = "'Segoe UI','Helvetica Neue',Arial,sans-serif"
 
@@ -194,12 +194,11 @@ const bar = (x: number, y: number, w: number, frac: number | null, tone: Tone, m
   return s
 }
 
-export type LampKey = 'failed' | 'cold' | 'tools' | 'agents' | 'turbo'
+export type LampKey = 'failed' | 'cold' | 'tools' | 'agents'
 export type Lamp = { key: LampKey; on: boolean; tone: Tone; count?: number; word: string; title: string }
 
-/** The five lamps: one state each, none for what a bar or a counter already shows. */
-export const lamps = (snap: Snap, now: number): Lamp[] => {
-  const rate = ratePerMin(snap.samples, now)
+/** The four lamps: one state each, none for what a bar or a counter already shows. */
+export const lamps = (snap: Snap, _now: number): Lamp[] => {
   const cache = snap.cacheHit != null ? Math.round(snap.cacheHit * 100) : null
   return [
     { key: 'failed', on: snap.hasError, tone: 'bad', word: 'FAILED', title: snap.hasError ? 'The last turn ended in error' : 'Lights red when a turn ends in error' },
@@ -209,10 +208,6 @@ export const lamps = (snap: Snap, now: number): Lamp[] => {
     },
     { key: 'tools', on: snap.toolsRunning > 0, tone: 'ok', count: snap.toolsRunning, word: 'TOOLS', title: `${snap.toolsRunning} tool call${snap.toolsRunning === 1 ? '' : 's'} running` },
     { key: 'agents', on: snap.agents.length > 0, tone: 'ok', count: snap.agents.length, word: 'AGENTS', title: `${snap.agents.length} subagent${snap.agents.length === 1 ? '' : 's'} running` },
-    {
-      key: 'turbo', on: settings.turboAt > 0 && rate >= settings.turboAt, tone: 'ok', word: 'TURBO',
-      title: `${compactTokens(rate)} tokens/min over the last 5 minutes; lights at ${compactTokens(settings.turboAt)}`,
-    },
   ]
 }
 
@@ -230,8 +225,6 @@ const GLYPHS: Record<LampKey, string> = {
     '<path d="M8.32 3.84 A0.6 0.6 0 0 0 8.32 4.69 L9.31 5.68 A0.6 0.6 0 0 0 10.16 5.68 L12.24 3.6 A3.4 3.4 0 0 1 7.8 8.04 L3.66 12.18 A1.3 1.3 0 0 1 1.82 10.34 L5.96 6.2 A3.4 3.4 0 0 1 10.4 1.76 Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
   agents:
     '<circle cx="5" cy="3.75" r="2" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.25 12.5 V12 A3.75 3.75 0 0 1 8.75 12 V12.5" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.75 1.75 A2 2 0 0 1 9.75 5.75" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.75 12.5 V12 A3.75 3.75 0 0 0 9.97 8.38" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
-  turbo:
-    '<path d="M9.5 1.25 L2 8.5 H6.25 L4.5 12.75 L12 5.5 H7.75 Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
 }
 
 /** Header blocks share one grammar: the value on the top line, a small caps label under it. */
@@ -329,7 +322,7 @@ export const buildSvg = (snap: Snap, now: number): string => {
 
 /** Width of the strip in viewBox units, and the lamps Svg's share of it: a Box of that width scales the lamps like the strip. */
 export const STRIP_W = 560
-export const LAMPS_W = 5 * LAMP_PITCH
+export const LAMPS_W = 4 * LAMP_PITCH
 // The image is STRIP_W minus one gap wide; the engine takes whole percentages only, so the scale is within 1%.
 export const LAMPS_SHARE = `${Math.round((LAMPS_W / (STRIP_W - 20)) * 100)}%`
 

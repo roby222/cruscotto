@@ -126,9 +126,6 @@ describe('dash helpers', () => {
     Object.assign(settings, { coldCacheBelow: 50 })
     // the odometer shows this session's API value
     expect(buildSvg(busy, now).includes('$12.00')).toBe(true)
-    // turbo from the 5-minute rate
-    const fast = { ...quiet, samples: [{ t: now - 60_000, tokens: 600_000 }, { t: now, tokens: 600_000 }] } // 1.2 M in 5 min = 240 k/min
-    expect(lampWords(lamps(fast, now))).toEqual(['TURBO'])
     // the terminal line carries the words; the svg carries the tooltips
     expect(buildLine(busy, now).includes('TOOLS 3')).toBe(true)
     expect(buildLampsSvg(busy, now).includes('<title>3 tool calls running</title>')).toBe(true)

@@ -19,7 +19,7 @@ export const register: Register = (on, options) => {
     await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0, agents: [] }))
     await $.command.register({ name: 'cruscotto', description: 'Raw cruscotto readings, to compare with the Usage panel' })
     if (buttonsFile) extra = parseButtons(await $.fs.read(buttonsFile).catch(() => ''))
-    // "resets in", the range and the turbo lamp move with the clock, not with a state write.
+    // "resets in" and the range move with the clock, not with a state write.
     $.clock.every(15_000, () => $.ui.invalidate('ui.render'))
 
     return next(e)

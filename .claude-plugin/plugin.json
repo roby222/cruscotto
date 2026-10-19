@@ -1,7 +1,7 @@
 {
   "name": "cruscotto",
   "version": "0.1.0",
-  "description": "Instrument strip above the prompt: context, 5-hour and weekly limits, range to the reset, the session's tokens and their API value, five lamps and prompt buttons.",
+  "description": "Instrument strip above the prompt: context, 5-hour and weekly limits, range to the reset, the session's tokens and their API value, four lamps and prompt buttons.",
   "author": {
     "name": "Roberto Pisu",
     "url": "https://github.com/roby222"
@@ -38,7 +38,7 @@
     "lamps": {
       "type": "boolean",
       "title": "Lamps",
-      "description": "Show the five lamps on the bottom row: failed turn, cold cache, tools running, agents running, turbo.",
+      "description": "Show the four lamps on the bottom row: failed turn, cold cache, tools running, agents running.",
       "default": true
     },
     "coldCacheBelow": {
@@ -46,12 +46,6 @@
       "title": "Cold cache lamp (%)",
       "description": "The cold lamp lights amber when the cache hit of the last turn is under this share.",
       "default": 50
-    },
-    "turboAt": {
-      "type": "number",
-      "title": "Turbo lamp (tokens/min)",
-      "description": "The turbo lamp lights when the token rate of the last 5 minutes reaches this; 0 turns it off.",
-      "default": 200000
     },
     "buttons": {
       "type": "boolean",
