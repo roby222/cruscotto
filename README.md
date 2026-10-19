@@ -1,10 +1,11 @@
 # cruscotto
 
 A quiet instrument strip above the Claude Code prompt: four tiles with one
-live number each, four lamps, and buttons for the prompts you send most
-often. Flat, sans, no chrome, readable at a glance.
+live number each, a tokens-per-minute meter that moves while Claude works,
+a spectrum of the last turns, four lamps, and buttons for the prompts you
+send most often. Flat, sans, no chrome, readable at a glance.
 
-![The strip: four tiles, Context, Session 5 h, Range and Weekly, the session's tokens and API value under them, and the lamp row at the bottom left](docs/skin-night.svg)
+![The strip: four tiles, Context, Session 5 h, Range and Weekly; under them the tokens-per-minute meter, the last-turns spectrum and the session's tokens and cost; the lamps and the buttons at the bottom](docs/skin-night.svg)
 
 ## What it shows
 
@@ -18,7 +19,7 @@ often. Flat, sans, no chrome, readable at a glance.
 
 Every tile has the same grammar: a small caps label, one large number that
 is the live part, a short caption, and the bar where there is a quantity.
-Under the tiles, the meter row: the rate meter and the spectrum on the
+Under the tiles, the meter row: the tokens-per-minute meter and the spectrum on the
 left, two counters on the right: this session's tokens, in millions, and
 what they would have cost at API prices (nothing is billed on a Pro or Max
 plan). The exact numbers behind the meters are in `/cruscotto`; the strip

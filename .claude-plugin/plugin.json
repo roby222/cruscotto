@@ -1,7 +1,7 @@
 {
   "name": "cruscotto",
   "version": "0.1.0",
-  "description": "Instrument strip above the prompt: context, 5-hour and weekly limits, range to the reset, the session's tokens and their API value, four lamps and prompt buttons.",
+  "description": "Instrument strip above the prompt: context, 5-hour and weekly limits, range to the reset, a tokens-per-minute meter, the last turns, the session's tokens and cost, four lamps and prompt buttons.",
   "author": {
     "name": "Roberto Pisu",
     "url": "https://github.com/roby222"
