@@ -146,7 +146,7 @@ export const register: Register = (on, options) => {
     // Mods below in the chain draw first: whoever has something to show gets the band, and cruscotto
     // takes it back when they are done. With nothing below, next(e) is the engine's own empty band.
     const below = await next(e)
-    const theirs = (below as { type?: string } | null)?.type !== 'engine'
+    const theirs = below.type !== 'engine'
     const snap = await read($, snapAtom)
     if (theirs || e.props.hasSurvey || snap.isHidden) return below
 
