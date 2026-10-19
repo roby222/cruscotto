@@ -64,8 +64,20 @@ Each one submits a prompt as your own words:
   and how long is left.
 
 VS Code and the desktop app draw them in your editor theme's button colors;
-the plugin cannot change that. With the strip focused, the hotkeys are `g`,
-`c` and `h`. The texts live in `hooks/actions.ts`.
+the plugin cannot change that. If the theme's blue clashes with the strip,
+give the buttons the skin's greys in VS Code's `settings.json`; it applies to
+every button of the editor:
+
+```json
+"workbench.colorCustomizations": {
+  "button.background": "#34363a",
+  "button.foreground": "#e6e4df",
+  "button.hoverBackground": "#45474c"
+}
+```
+
+With the strip focused, the hotkeys are `g`, `c` and `h`. The texts live in
+`hooks/actions.ts`.
 
 ### Your own buttons
 
