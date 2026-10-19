@@ -20,9 +20,6 @@ roby222/cruscotto`, which adds the marketplace on the way. In the desktop
 app: + next to the prompt, Plugins, Add marketplace `roby222/cruscotto`, Add
 plugin. Pick the user scope and the strip is there.
 
-Tested on macOS with the VS Code extension, Claude Code 2.1.301. The
-desktop app, the terminal, Windows and WSL are untried; issues welcome.
-
 ## What it shows
 
 | Tile | Reading |
