@@ -4,7 +4,7 @@ import type { Register } from 'claude-code'
 import type { Snap } from '../types'
 import { ACTIONS, parseButtons } from './actions'
 import type { Action } from './actions'
-import { INITIAL, LAMPS_SHARE, buildLampsSvg, buildLine, buildReport, buildSvg, lampWords, lamps, pushReading, pushSample, settings, tokensOf } from './dash'
+import { INITIAL, LAMPS_SHARE, buildLampsSvg, buildLine, buildReport, buildSvg, lampWords, lamps, freshOf, pushReading, pushSample, settings, tokensOf } from './dash'
 
 const snapAtom = atom({ plugin: 'cruscotto', key: 'snap' } as const, INITIAL)
 
@@ -87,11 +87,12 @@ export const register: Register = (on, options) => {
   on('turn.complete', async ($, e, next) => {
     const now = await $.clock.now()
     const used = e.usage ? tokensOf(e.usage) : 0
+    const fresh = e.usage ? freshOf(e.usage) : 0
 
     // A subagent's turn: it leaves the AGENTS lamp and its tokens count, nothing else is the person's turn.
     if (e.agentId) {
       const id = e.agentId
-      await update($, snapAtom, (s: Snap) => ({ ...s, trip: s.trip + used, samples: used > 0 ? pushSample(s.samples, { t: now, tokens: used }) : s.samples, agents: s.agents.filter(a => a !== id) }))
+      await update($, snapAtom, (s: Snap) => ({ ...s, trip: s.trip + used, samples: fresh > 0 ? pushSample(s.samples, { t: now, tokens: fresh }) : s.samples, agents: s.agents.filter(a => a !== id) }))
 
       return next(e)
     }
@@ -114,7 +115,7 @@ export const register: Register = (on, options) => {
     await update($, snapAtom, (s: Snap) => {
       // The live estimates of this turn give way to its real usage.
       const settled = s.samples.filter(x => !x.live)
-      const samples = used > 0 ? pushSample(settled, { t: now, tokens: used }) : settled
+      const samples = fresh > 0 ? pushSample(settled, { t: now, tokens: fresh }) : settled
 
       return {
         ...s,

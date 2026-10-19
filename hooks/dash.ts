@@ -61,6 +61,10 @@ export const tokensOf = (u: {
   cache_creation_input_tokens: number
 }) => u.input_tokens + u.output_tokens + u.cache_read_input_tokens + u.cache_creation_input_tokens
 
+/** The tokens a turn adds: input, output and cache writes. Cache reads are the context read again, not new work. */
+export const freshOf = (u: { input_tokens: number; output_tokens: number; cache_creation_input_tokens: number }) =>
+  u.input_tokens + u.output_tokens + u.cache_creation_input_tokens
+
 export const pushSample = (samples: Sample[], s: Sample): Sample[] =>
   [...samples, s].filter(x => s.t - x.t <= WINDOW_MS)
 
@@ -250,8 +254,8 @@ const lampRow = (x: number, y: number, list: Lamp[]): { svg: string; width: numb
   return { svg: s, width: list.length * LAMP_PITCH }
 }
 
-/** Full scale of the rate meter, tokens per minute. */
-export const VU_FULL = 200_000
+/** Full scale of the rate meter: fresh tokens per minute, cache reads excluded. */
+export const VU_FULL = 60_000
 const VU_SEGMENTS = 10
 
 /** Segments lit for a rate: 0 to VU_SEGMENTS. */
@@ -267,11 +271,14 @@ const vuMeter = (x: number, y: number, snap: Snap, now: number, working: boolean
   const lit = vuLit(rate)
   const peak = Math.max(...[0, 5, 10, 15, 20].map(sec => vuLit(ratePerMin(snap.samples, now - sec * 1000))))
   const color = (i: number) => (i < 7 ? skin().ok : i < 9 ? skin().warn ?? AMBER : skin().bad ?? RED)
-  let s = `<g><title>${esc(compactTokens(rate))} tokens/min over the last 5 minutes; full scale ${esc(compactTokens(VU_FULL))}</title>`
+  let s = `<g><title>${esc(compactTokens(rate))} fresh tokens/min over the last 5 minutes; full scale ${esc(compactTokens(VU_FULL))}</title>`
   for (let i = 0; i < VU_SEGMENTS; i++) {
     const sx = x + i * 8
-    if (i < lit) s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${color(i)}"/>`
-    else if (i === peak - 1 && !working) s += `<rect x="${sx + 0.5}" y="${y + 0.5}" width="5" height="11" rx="1" fill="none" stroke="${color(i)}" stroke-width="1"/>`
+    if (i < lit) {
+      s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${color(i)}"/>`
+      // over lit segments the wave runs dark, so a full meter still shows the work
+      if (working) s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${skin().track}" fill-opacity="0">${WAVE(i)}</rect>`
+    } else if (i === peak - 1 && !working) s += `<rect x="${sx + 0.5}" y="${y + 0.5}" width="5" height="11" rx="1" fill="none" stroke="${color(i)}" stroke-width="1"/>`
     else {
       s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${skin().track}"/>`
       if (working) s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${color(i)}" fill-opacity="0">${WAVE(i)}</rect>`
@@ -414,7 +421,7 @@ export const buildReport = (snap: Snap, now: number): string => {
     `context: ${snap.ctxPct ?? '--'}% (${snap.ctxTokens ?? '--'} of ${snap.ctxWindow ?? '--'} tokens), compaction at ${snap.compactPct != null ? Math.round(snap.compactPct) + '%' : '--'}`,
     ...snap.limits.map(l => `${l.kind}: used ${l.pct}%, left ${Math.round(leftOf(l))}%, resets in ${untilReset(l.resetsAt, now)} (${l.resetsAt ?? '--'})`),
     `tokens this session: ${snap.trip} (${millions(snap.trip)} M)`,
-    `rate: ${Math.round(ratePerMin(snap.samples, now))} tokens/min over the last 5 minutes (meter full scale ${VU_FULL})`,
+    `rate: ${Math.round(ratePerMin(snap.samples, now))} fresh tokens/min over the last 5 minutes, cache reads excluded (meter full scale ${VU_FULL})`,
     `last turns: ${(snap.turns ?? []).join(', ') || 'none yet'}${snap.live ? `; in progress about ${Math.round(snap.live)}` : ''}`,
     `measures this turn: ${snap.measures ?? 0}, context tokens seen: ${(snap.measureTrail ?? []).join(' > ') || '--'}`,
     `cost this session at API prices: ${snap.usd != null ? '$' + snap.usd.toFixed(4) : '--'}, cache ${snap.cacheHit != null ? Math.round(snap.cacheHit * 100) + '%' : '--'}`,

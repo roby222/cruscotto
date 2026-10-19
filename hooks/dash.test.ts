@@ -1,8 +1,12 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { INITIAL, buildLampsSvg, buildLine, buildSvg, lamp, vuLit, lampWords, lamps, leftTone, limitLabel, millions, pushReading, range, rangeTone, pushSample, ratePerMin, rateMax, SKINS, settings, shortModel, tokensOf, untilReset } from './dash'
+import { INITIAL, buildLampsSvg, buildLine, buildSvg, freshOf, lamp, vuLit, lampWords, lamps, leftTone, limitLabel, millions, pushReading, range, rangeTone, pushSample, ratePerMin, rateMax, SKINS, settings, shortModel, tokensOf, untilReset } from './dash'
 
 describe('dash helpers', () => {
+  test('freshOf lascia fuori le letture dalla cache', () => {
+    expect(freshOf({ input_tokens: 1, output_tokens: 2, cache_creation_input_tokens: 4 })).toBe(7)
+  })
+
   test('tokensOf somma i quattro conteggi', () => {
     expect(
       tokensOf({ input_tokens: 1, output_tokens: 2, cache_read_input_tokens: 3, cache_creation_input_tokens: 4 }),
@@ -106,11 +110,11 @@ describe('dash helpers', () => {
   test('VU meter e spettro degli ultimi turni', () => {
     const now = 10 * 3_600_000
     expect(vuLit(0)).toBe(0)
-    expect(vuLit(100_000)).toBe(5)
+    expect(vuLit(30_000)).toBe(5)
     expect(vuLit(900_000)).toBe(10)
     const hot = { ...INITIAL, samples: [{ t: now - 60_000, tokens: 500_000 }], turns: [1_000, 48_000, 12_000] }
     const svg = buildSvg(hot, now)
-    expect(svg.includes('100 k tokens/min over the last 5 minutes')).toBe(true)
+    expect(svg.includes('100 k fresh tokens/min over the last 5 minutes')).toBe(true)
     expect(svg.includes('Tokens of the last 3 turns, oldest first: 1 k, 48 k, 12 k')).toBe(true)
     expect(buildSvg(INITIAL, now).includes('oldest first: none yet')).toBe(true)
     expect(buildSvg({ ...hot, live: 7_000 }, now).includes('in progress about 7 k')).toBe(true)
