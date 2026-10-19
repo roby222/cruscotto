@@ -102,6 +102,9 @@ locks shows its value and no control.
 The samples come from the plugin's own code (`node docs/skins.ts`); only
 the buttons differ, here in the skin's greys.
 
+Updates reach you with `claude plugin update cruscotto`, at your next
+session; [CHANGELOG.md](CHANGELOG.md) lists what each version changed.
+
 ## Development
 
 ```
