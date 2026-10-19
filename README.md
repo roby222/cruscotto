@@ -102,8 +102,10 @@ locks shows its value and no control.
 The samples come from the plugin's own code (`node docs/skins.ts`); only
 the buttons differ, here in the skin's greys.
 
-Updates reach you with `claude plugin update cruscotto`, at your next
-session; [CHANGELOG.md](CHANGELOG.md) lists what each version changed.
+Updates reach you with `claude plugin update cruscotto`, or on their own
+if you turn on auto-update for this marketplace under Marketplaces in
+`/plugin`; either way they apply at your next session.
+[CHANGELOG.md](CHANGELOG.md) lists what each version changed.
 
 ## Development
 
