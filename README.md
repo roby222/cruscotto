@@ -1,49 +1,79 @@
 # cruscotto
 
-A quiet instrument strip above the Claude Code prompt: four tiles with one
-live number each, a tokens-per-minute meter that moves while Claude works,
-a spectrum of the last turns, four lamps, and buttons for the prompts you
-send most often. Flat, sans, no chrome, readable at a glance.
+An instrument strip above the Claude Code prompt: how much context, session
+and weekly quota you have left, how fast Claude is working, what the last
+turns cost, and buttons for the prompts you send most often.
 
 ![The strip: four tiles, Context, Session 5 h, Range and Weekly; under them the tokens-per-minute meter, the last-turns spectrum and the session's tokens and cost; the lamps and the buttons at the bottom](docs/skin-night.svg)
 
+## Install
+
+At the prompt of a terminal session:
+
+```
+/plugin install cruscotto --marketplace roby222/cruscotto
+```
+
+Answer `y` to add the marketplace, then pick the user scope. The strip
+appears in that session right away and in every session after.
+
+Other ways in:
+
+- From a shell: `claude plugin install cruscotto --marketplace roby222/cruscotto`.
+- In the desktop app, where `/plugin` does not run: click + next to the
+  prompt box, then Plugins, Add marketplace with `roby222/cruscotto`, then
+  Add plugin.
+
+A private repository installs only for people who can read it on GitHub and
+whose machine already holds a git credential for github.com (an SSH key, or
+`gh auth login` then `gh auth setup-git`).
+
+Tested on macOS (Apple silicon) with the VS Code extension, Claude Code
+2.1.301. The module runs inside the engine's sandbox, with no Node and no
+filesystem access of its own, so nothing in it depends on the operating
+system; the desktop app, the terminal, Windows and WSL have not been tried
+yet. Reports are welcome as issues.
+
 ## What it shows
 
-| Gauge | Reading |
+Every tile has the same grammar: a small caps label, one large live number,
+a short caption, and a bar where there is a quantity.
+
+| Tile | Reading |
 |---|---|
 | Context | How full the context window is, with a tick at the auto-compaction threshold |
 | Session 5 h | Share of the 5-hour rate-limit window left, and when it resets |
+| Range | At the pace of the last 90 minutes, does the 5-hour window last to its reset? A verdict, so no bar |
 | Weekly | Share of the 7-day window left, and when it resets; any other window the API reports gets its own bar |
-| Tokens / min | A ten-segment VU meter of the fresh tokens per minute over the last 5 minutes: input, output and cache writes, not the cache reads that re-read the whole context at every call. Full scale 60 k/min, the top two segments in the text color; the outlined segment is the peak of the last 20 s. It is a throughput meter, not an alarm: a full meter means fast work, and whether the pace is a problem is Range's call. While a turn runs the engine reports no tokens, so a wave of light runs over the meter instead |
-| Last turns | A spectrum of the last eight turns, one column each, as tall as its tokens against the heaviest of the eight |
 
-Every tile has the same grammar: a small caps label, one large number that
-is the live part, a short caption, and the bar where there is a quantity.
-Under the tiles, the meter row: the tokens-per-minute meter and the spectrum on the
-left, two counters on the right: this session's tokens, in millions, and
-what they would have cost at API prices (nothing is billed on a Pro or Max
-plan). The exact numbers behind the meters are in `/cruscotto`; the strip
-is an image in VS Code, so hovering shows nothing. The bottom row has the
-lamps on the left and the buttons as one group on the right, the gear last.
+"12% spare, lasts to the reset" means yes, and little to spare is the
+ideal, not a warning. "1 h 20 min, runs out before reset" means no: amber if
+that is 30 minutes or more before the reset, red if it is within 30 minutes
+from now. Bars turn amber at 20% left, or within 20 points of compaction,
+and red at 5%; both thresholds are settings.
 
-The Range tile is a verdict, so it has no bar: at the pace of the last 90
-minutes, does the 5-hour window last to its reset? "12% spare, lasts to the
-reset" means yes, and little to spare is the ideal, not a warning. "1 h 20
-min, runs out before reset" means no: amber if that is 30 minutes or more
-before the reset, red if it is within 30 minutes from now.
+Under the tiles, the meter row:
 
-The token count sums input, output, cache-read and cache-write tokens of
-every turn of the session, subagents included.
+| Meter | Reading |
+|---|---|
+| Tokens / min | Fresh tokens per minute over the last 5 minutes: input, output and cache writes, not the cache reads that re-read the whole context at every call. Ten segments, full scale 60 k/min, the outlined one is the peak of the last 20 s |
+| Last turns | One column per turn, the last eight, as tall as its tokens against the heaviest of them; the outlined column is the turn in progress |
+| Tokens, Cost | This session's tokens, in millions, and what they would have cost at API prices (nothing is billed on a Pro or Max plan) |
 
-The bars turn amber at 20% left, or within 20 points of compaction, and
-red at 5%; both thresholds are settings.
+The meter is a tachometer, not an alarm: full means fast work, and whether
+the pace is a problem is Range's call. While a turn runs the engine reports
+no tokens, so a wave of light runs over the meter instead; it settles on the
+measured value when the turn ends.
+
+The exact numbers are in `/cruscotto`, which prints the raw readings to
+compare with the Usage panel. The strip is an image in VS Code, so hovering
+shows nothing.
 
 ## Lamps
 
 Like the lamps of a car cluster: one state each, and none for what a bar
-already shows. Each has its word under it; off, the glyph is a dim outline;
-lit, glyph and word take its color. Red means stop, amber means attention,
-green is information.
+already shows. Off, the glyph is a dim outline; lit, glyph and word take
+its color. Red means stop, amber means attention, green is information.
 
 | Lamp | Glyph | Lights when | Color |
 |---|---|---|---|
@@ -53,9 +83,6 @@ green is information.
 | Agents | two people, with a count | subagents are running right now | green |
 
 In the terminal, lit lamps are words in the line: `TOOLS 2, COLD`.
-`/cruscotto` lists them too.
-
-`/cruscotto` prints the raw readings, to compare with the Usage panel.
 
 ## Buttons
 
@@ -64,13 +91,17 @@ Each one submits a prompt as your own words:
 - **Go ahead**: solve it, go ahead on your own, and explain how.
 - **Commit and push**: stage everything, commit in the style of the last
   commits, push the current branch; no force push, no rebase.
-- **Hurry up**: speed up, parallelize, say why it is slow
-  and how long is left.
+- **Hurry up**: speed up, parallelize, say why it is slow and how long is
+  left.
+- **⚙**: opens `/config`, where the settings below live.
 
-VS Code and the desktop app draw them in your editor theme's button colors;
-the plugin cannot change that. If the theme's blue clashes with the strip,
-give the buttons the skin's greys in VS Code's `settings.json`; it applies to
-every button of the editor:
+With the strip focused, the hotkeys are `g`, `c` and `h`. The texts live in
+`hooks/actions.ts`.
+
+VS Code and the desktop app paint the buttons in your editor theme's
+colors; the plugin cannot change that. If the theme's blue clashes with the
+strip, give the buttons the skin's greys in VS Code's `settings.json`; it
+applies to every button of the editor:
 
 ```json
 "workbench.colorCustomizations": {
@@ -79,9 +110,6 @@ every button of the editor:
   "button.hoverBackground": "#45474c"
 }
 ```
-
-With the strip focused, the hotkeys are `g`, `c` and `h`. The texts live in
-`hooks/actions.ts`.
 
 ### Your own buttons
 
@@ -102,8 +130,8 @@ it up at your next prompt. Turn **Prompt buttons** off to keep only yours.
 
 ## Settings
 
-The **⚙** button, the last of the row, opens `/config`, where the
-plugin's options live; the same screen appears once at install.
+The ⚙ button opens `/config`; the same screen appears once at install. A
+change there reloads the strip with the new values.
 
 | Option | Default | What it does |
 |---|---|---|
@@ -114,8 +142,6 @@ plugin's options live; the same screen appears once at install.
 | Cold cache lamp | 50 | Cache hit share under which the cold lamp lights |
 | Prompt buttons | on | Show the three built-in prompt buttons |
 | Your buttons | none | A Markdown file with your own buttons, see above |
-
-A change there reloads the strip with the new values.
 
 ### Skins
 
@@ -131,44 +157,11 @@ The samples are drawn by the plugin's own code (`docs/skins.ts`), so they
 match what the strip shows. Only the buttons differ: here they wear the
 skin's greys, in the app the editor theme paints them.
 
-## Install
-
-At the prompt of a terminal session:
-
-```
-/plugin install cruscotto --marketplace roby222/cruscotto
-```
-
-Answer `y` to add the marketplace, then pick the user scope: the strip
-appears in that session right away and in every session after.
-
-From a shell:
-
-```
-claude plugin install cruscotto --marketplace roby222/cruscotto
-```
-
-In the desktop app, where `/plugin` does not run: click + next to the
-prompt box, then Plugins, Add marketplace with `roby222/cruscotto`, then Add
-plugin.
-
-A private repository installs only for people who can read it on GitHub and
-whose machine already holds a git credential for github.com (an SSH key, or
-`gh auth login` then `gh auth setup-git`).
-
 ## Surfaces
 
 The strip is drawn as SVG on the desktop app and the VS Code extension. On
 the terminal, which has no SVG, it is one line of text with the same values,
 and the buttons draw as `[ label ]`.
-
-## Tested on
-
-macOS (Apple silicon) with the VS Code extension, Claude Code 2.1.301. The
-module runs inside the engine's own sandbox, with no Node and no filesystem
-access of its own, so nothing in it depends on the operating system; the
-desktop app, the terminal, Windows and WSL have not been tried yet. Reports
-are welcome as issues.
 
 ## Development
 
@@ -182,12 +175,11 @@ The engine writes `.claude-plugin/types/` on load, for the editor; it is
 ignored by git. `tsc -p <this folder>` type-checks the module once those
 types exist.
 
-## Layout
-
 - `.claude-plugin/plugin.json`: the manifest.
 - `.claude-plugin/marketplace.json`: makes this repository installable.
 - `hooks/register.tsx`: the hooks module, drawing and state.
-- `hooks/dash.ts`: thresholds, lamps, range, SVG.
+- `hooks/dash.ts`: thresholds, lamps, range, meters, SVG.
 - `hooks/actions.ts`: the three buttons.
 - `types/index.d.ts`: the state contract.
 - `hooks/*.test.ts`: tests, run with `claude plugin test`.
+- `docs/skins.ts`: redraws the four samples above.
