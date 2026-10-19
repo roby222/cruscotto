@@ -18,7 +18,7 @@ Every tile has the same grammar: a small caps label, one large number that
 is the live part, a short caption, and the bar where there is a quantity.
 Under the tiles, a quieter status row: the lamps on the left, the odometer on
 the right, the total tokens counted, in millions, kept across sessions. The
-buttons follow with the same split, actions left, Settings right.
+buttons follow, one under each tile.
 
 The Range tile is a verdict, so it has no bar: at the pace of the last 90
 minutes, does the 5-hour window last to its reset? "12% spare, lasts to the
@@ -86,7 +86,7 @@ it up at your next prompt. Turn **Prompt buttons** off to keep only yours.
 
 ## Settings
 
-The **Settings** button at the right end of the row opens `/config`, where the
+The **Settings** button, the last of the row, opens `/config`, where the
 plugin's options live; the same screen appears once at install.
 
 | Option | Default | What it does |

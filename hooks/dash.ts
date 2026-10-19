@@ -296,14 +296,15 @@ export const buildSvg = (snap: Snap, now: number): string => {
 
   const W = 560
   const L = 0
-  const R = W
   const GAP = 20
+  // The right edge of everything drawn: the last tile ends one GAP before W, like every other.
+  const R = W - GAP
   // Up to four tiles on a row; five or six go three by three, so no row holds one tile alone.
   const cols = cells.length <= 4 ? cells.length : 3
-  const COL = (R - L - GAP * (cols - 1)) / cols
+  // Columns are exact fractions of W, so the host's button cells (width 100/cols %) start where the tiles do.
+  const COL = W / cols
   const ROW = 60
   const rows = Math.ceil(cells.length / cols)
-  // Below the last bar, the same air that separates the header from the tiles: the button row is the next grid row.
   // Three rows, three weights: the gauges first and largest, the quiet status footer (lamps left, odometer right)
   // under them at label size, the host's buttons below. Rows are one GAP apart.
   const FOOT = 12 + rows * ROW
@@ -317,7 +318,7 @@ export const buildSvg = (snap: Snap, now: number): string => {
     s += text(x, y + 36, c.caption, 9, skin().muted)
     if (c.frac != null || c.marker != null) s += bar(x, y + 44, w, c.frac, c.tone, c.marker)
   }
-  cells.forEach((c, i) => cell(c, L + (i % cols) * (COL + GAP), 8 + ROW * Math.floor(i / cols), COL))
+  cells.forEach((c, i) => cell(c, L + (i % cols) * COL, 8 + ROW * Math.floor(i / cols), COL - GAP))
 
   // Footer: glyphs on FOOT, words 26 below; the odometer sits on the words' baseline, value in text, unit muted.
   if (settings.lamps) s += lampRow(L, FOOT, lamps(snap, now)).svg

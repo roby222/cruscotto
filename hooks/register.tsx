@@ -155,14 +155,13 @@ export const register: Register = (on, options) => {
         onPress={() => void $.command.run({ command: 'config' }).catch(() => $.ui.toast('Type /config to change the cruscotto settings'))}
       />
     )
-    // The third row, split like the status row above it: actions left, Settings right. The Svg carries
-    // the air above it, the margin goes below, so the row is not glued to the host's bottom edge; no side
-    // padding, so the first button shares the tiles' left edge and Settings the odometer's right edge. VS Code paints Buttons in its theme colors whatever
-    // the props (only key, label and dimColor reach it); a text link looked like no button at all.
-    const buttonRow = (
-      <Box flexDirection="row" justifyContent="space-between" marginBottom={1}>
-        <Box flexDirection="row" gap={3}>{buttons}</Box>
-        {settingsButton}
+    // VS Code paints Buttons in its theme colors whatever the props (only key, label and dimColor reach it);
+    // a text link looked like no button at all. What the plugin does own is their place: one cell per
+    // column, so each button starts under a tile's label. The margin goes below the row, not above.
+    // shortcut: cells are quarters, right for four tiles; with five or six rate windows the Svg draws three columns and the buttons no longer line up, revisit if such a plan appears.
+    const grid = (
+      <Box flexDirection="row" marginBottom={1}>
+        {[...buttons, settingsButton].map((b, i) => <Box key={String(i)} width="25%">{b}</Box>)}
       </Box>
     )
 
@@ -170,7 +169,10 @@ export const register: Register = (on, options) => {
       return (
         <Box flexDirection="column">
           <Text>{buildLine(snap, now)}</Text>
-          {buttonRow}
+          <Box flexDirection="row" justifyContent="space-between" marginBottom={1}>
+            <Box flexDirection="row" gap={3}>{buttons}</Box>
+            {settingsButton}
+          </Box>
         </Box>
       )
     }
@@ -180,7 +182,7 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column" alignSelf="flex-start">
         <Svg source={buildSvg(snap, now)} alt={buildLine(snap, now)} />
-        {buttonRow}
+        {grid}
       </Box>
     )
   })
