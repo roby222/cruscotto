@@ -129,9 +129,13 @@ test('disegna quando sotto c\'è solo una cornice o un mod che passa', { plugins
 test('cede la banda a chi ha qualcosa da mostrare', { plugins: [other] }, async ($, on) => {
   world(on)
 
-  const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
-  expect(await ui.find({ type: 'Text', text: /another mod/ })).toBeDefined()
-  expect(await ui.find({ type: 'Svg' })).toBeUndefined()
+  for (const surface of ['terminal', 'vscode'] as const) {
+    const ui = await $.ui.mount({ plugin: 'cruscotto', surface, component: 'AbovePrompt', props: PROPS })
+    expect(await ui.find({ type: 'Text', text: /another mod/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /tok\/min/ })).toBeUndefined()
+    expect(await ui.find({ type: 'Svg' })).toBeUndefined()
+    await ui.unmount()
+  }
 })
 
 // A mod that draws while it has something, then passes. Inline mods run sandboxed, with no reach into the

@@ -158,7 +158,8 @@ export const register: Register = (on, options) => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     // Mods below in the chain draw first: whoever has something to show gets the band, and cruscotto
     // takes it back when they are done. With nothing below, next(e) is the engine's own empty band,
-    // possibly inside a frame a decorating mod drew around it.
+    // possibly inside a frame a decorating mod drew around it. The price of asking first: every redraw of
+    // the strip, the 5 s tick included, runs the hooks below, and the strip waits for the slowest of them.
     const below = await next(e)
     if (hasContent(below) || e.props.hasSurvey) return below
     // Read the state only when drawing: a read here subscribes the band to every state write.
