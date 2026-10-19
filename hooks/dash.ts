@@ -321,8 +321,10 @@ export const buildSvg = (snap: Snap, now: number): string => {
 
   // Footer: glyphs on FOOT, words 26 below; the odometer sits on the words' baseline, value in text, unit muted.
   if (settings.lamps) s += lampRow(L, FOOT, lamps(snap, now)).svg
-  s += text(R, FOOT + 26, `${millions(snap.total)} M`, 11, skin().text, 'end', 700)
-  s += label(R - 46, FOOT + 26, 'TOKENS, ALL SESSIONS', skin().muted, 'end')
+  // One text run anchored at the right edge: the label can never overlap the value, whatever its width.
+  s += `<text x="${R}" y="${FOOT + 26}" text-anchor="end" font-family="${FONT}" style="font-variant-numeric:tabular-nums">`
+    + `<tspan font-size="7" font-weight="600" fill="${skin().muted}">TOKENS, ALL SESSIONS  </tspan>`
+    + `<tspan font-size="11" font-weight="700" fill="${skin().text}">${esc(millions(snap.total))} M</tspan></text>`
 
   s += `</svg>`
   return s
