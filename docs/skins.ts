@@ -25,9 +25,20 @@ for (const skin of Object.keys(SKINS)) {
   const [, w, h] = raw.match(/viewBox="0 0 (\d+) (\d+)"/)!.map(Number)
   const body = raw.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '')
   const lampsBody = buildLampsSvg(snap, now).replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '')
+  // The buttons, which the host draws in the editor theme's colors: here in the skin's greys, right-aligned on the lamps' row.
+  const t = SKINS[skin]
+  let x = w - 20
+  let buttons = ''
+  for (const label of ['⚙', 'Hurry up', 'Commit and push', 'Go ahead']) {
+    const bw = label === '⚙' ? 16 : label.length * 4.4 + 14
+    x -= bw
+    buttons += `<rect x="${x}" y="9" width="${bw}" height="14" rx="3" fill="${t.track}"/>`
+      + `<text x="${x + bw / 2}" y="19" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="8" font-weight="600" fill="${t.text}" text-anchor="middle">${label}</text>`
+    x -= 8
+  }
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w + 24} ${h + 60}" width="${w + 24}" height="${h + 60}">`
     + `<rect width="100%" height="100%" rx="8" fill="${BG[skin]}"/><g transform="translate(12 12)">${body}</g>`
-    + `<g transform="translate(12 ${h + 12})">${lampsBody}</g></svg>`
+    + `<g transform="translate(12 ${h + 12})">${lampsBody}${buttons}</g></svg>`
   writeFileSync(new URL(`./skin-${skin}.svg`, import.meta.url), svg)
   console.log(skin, svg.length, 'bytes', svg.includes('spare') ? 'range ok' : 'range?')
 }

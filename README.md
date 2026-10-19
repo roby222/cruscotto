@@ -1,8 +1,8 @@
 # cruscotto
 
-A quiet instrument strip above the Claude Code prompt, in the spirit of a
-nineties night-lit dashboard: a row of six lamps, four tiles with one live
-number each, and three buttons for the prompts you send most often.
+A quiet instrument strip above the Claude Code prompt: four tiles with one
+live number each, six lamps, and buttons for the prompts you send most
+often. Flat, sans, no chrome, readable at a glance.
 
 ![The strip: four tiles, Context, Session 5 h, Range and Weekly, the odometer under them, and the lamp row at the bottom left](docs/skin-night.svg)
 
@@ -42,7 +42,7 @@ information.
 | Lamp | Glyph | Lights when | Color |
 |---|---|---|---|
 | Failed | warning triangle | the last turn ended in error | red |
-| Cost | coin | the session cost reaches the cost setting, $10 by default | amber |
+| Cost | coin | the API-price value of this session reaches the cost setting, $10 by default, and stays lit for the rest of the session. The figure is what the tokens would cost on an API key; on a Pro or Max plan nothing is billed and the rate-limit windows already show the quota, so set it to 0 there | amber |
 | Cold | snowflake | the cache hit of the last turn is under 50%: the context is being paid at full price, as after a compaction | amber |
 | Tools | wrench, with a count | tool calls are running right now | green |
 | Agents | two people, with a count | subagents are running right now | green |
@@ -103,11 +103,11 @@ plugin's options live; the same screen appears once at install.
 
 | Option | Default | What it does |
 |---|---|---|
-| Skin | night | The whole palette: night for dark themes, amber for a one-color nineties cluster (attention in warm white, errors in saturated red, so they stand apart from the amber), paper for light themes, mono for grey |
+| Skin | night | The whole palette: night for dark themes, amber for a one-color amber cluster (attention in warm white, errors in saturated red, so they stand apart from the amber), paper for light themes, mono for grey |
 | Amber threshold | 20 | A bar turns amber at this share left or less |
 | Red threshold | 5 | The same for red |
 | Lamps | on | Show the lamp row |
-| Cost lamp | 10 | Session cost in USD that lights the cost lamp; 0 turns it off |
+| Cost lamp | 10 | API-price value of the session, in USD, that lights the cost lamp; 0 turns it off, the sensible choice on a subscription plan |
 | Cold cache lamp | 50 | Cache hit share under which the cold lamp lights |
 | Turbo lamp | 200000 | Tokens per minute that light the turbo lamp; 0 turns it off |
 | Prompt buttons | on | Show the three built-in prompt buttons |
@@ -126,7 +126,8 @@ A change there reloads the strip with the new values.
 | ![paper](docs/skin-paper.svg) | ![mono](docs/skin-mono.svg) |
 
 The samples are drawn by the plugin's own code (`docs/skins.ts`), so they
-match what the strip shows.
+match what the strip shows. Only the buttons differ: here they wear the
+skin's greys, in the app the editor theme paints them.
 
 ## Install
 

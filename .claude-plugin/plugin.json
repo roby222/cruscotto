@@ -1,7 +1,7 @@
 {
   "name": "cruscotto",
   "version": "0.1.0",
-  "description": "Nineties dashboard above the prompt: context, 5-hour and weekly limits, model, tokens per minute, total tokens in millions, and a check-engine lamp.",
+  "description": "Instrument strip above the prompt: context, 5-hour and weekly limits, range to the reset, total tokens, six lamps and prompt buttons.",
   "author": {
     "name": "Roberto Pisu",
     "url": "https://github.com/roby222"
@@ -14,7 +14,7 @@
     "skin": {
       "type": "string",
       "title": "Skin",
-      "description": "The look of the strip: night (dark themes), amber (one-color nineties cluster), paper (light themes) or mono.",
+      "description": "The look of the strip: night (dark themes), amber (one-color amber cluster), paper (light themes) or mono.",
       "default": "night",
       "options": [
         "night",
@@ -38,13 +38,13 @@
     "lamps": {
       "type": "boolean",
       "title": "Lamps",
-      "description": "Show the six lamps in the header: failed turn, cost, cold cache, tools running, agents running, turbo.",
+      "description": "Show the six lamps on the bottom row: failed turn, cost, cold cache, tools running, agents running, turbo.",
       "default": true
     },
     "costAlertUsd": {
       "type": "number",
       "title": "Cost lamp (USD)",
-      "description": "The cost lamp lights amber when the session cost reaches this; 0 turns it off.",
+      "description": "The cost lamp lights amber when the session's API-price value reaches this many USD; 0 turns it off (sensible on a Pro or Max plan, where nothing is billed).",
       "default": 10
     },
     "coldCacheBelow": {

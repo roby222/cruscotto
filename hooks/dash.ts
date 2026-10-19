@@ -29,7 +29,7 @@ const AMBER = '#d9a441'
 const RED = '#d96b5a'
 
 type Skin = { text: string; muted: string; track: string; lampOff: string; ok: string; warn?: string; bad?: string }
-/** The skins: night (the default, for dark themes), amber (one-color nineties cluster), paper (for light themes), mono. */
+/** The skins: night (the default, for dark themes), amber (one-color amber cluster), paper (for light themes), mono. */
 export const SKINS: Record<string, Skin> = {
   night: { text: '#e6e4df', muted: '#8f8e8a', track: '#34363a', lampOff: '#3a3b40', ok: '#86b3a4' },
   // amber's healthy color is amber itself, so attention is a warm white and error a saturated red: the two must stand apart from the base.
