@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { INITIAL, buildLine, buildSvg, fitReasons, lamp, lampWords, lamps, leftTone, limitLabel, millions, pushReading, range, rangeTone, pushSample, ratePerMin, rateMax, SKINS, settings, shortModel, tokensOf, untilReset } from './dash'
+import { INITIAL, buildLine, buildSvg, lamp, lampWords, lamps, leftTone, limitLabel, millions, pushReading, range, rangeTone, pushSample, ratePerMin, rateMax, SKINS, settings, shortModel, tokensOf, untilReset } from './dash'
 
 describe('dash helpers', () => {
   test('tokensOf somma i quattro conteggi', () => {
@@ -56,12 +56,6 @@ describe('dash helpers', () => {
     expect(limitLabel('something_else')).toBe('something else')
   })
 
-  test('fitReasons taglia e conta', () => {
-    expect(fitReasons([], 44)).toBe('')
-    expect(fitReasons(['context high'], 44)).toBe('context high')
-    expect(fitReasons(['context almost full', 'session 5 h limit almost used up', 'weekly limit running low'], 44)).toBe('context almost full, +2')
-  })
-
   test('range proietta il consumo della finestra 5 h', () => {
     const h = 3_600_000
     const now = 10 * h
@@ -89,12 +83,12 @@ describe('dash helpers', () => {
   })
 
   test('la spia si accende per gradi', () => {
-    expect(lamp({ ...INITIAL, ctxPct: 30, limits: [{ kind: 'five_hour', pct: 79 }] }, 0)).toEqual({ tone: 'ok', reasons: [], notes: [] })
-    expect(lamp({ ...INITIAL, limits: [{ kind: 'five_hour', pct: 80 }] }, 0)).toEqual({ tone: 'warn', reasons: ['session 5 h limit running low'], notes: [] })
-    expect(lamp({ ...INITIAL, limits: [{ kind: 'seven_day', pct: 95 }] }, 0)).toEqual({ tone: 'bad', reasons: ['weekly limit almost used up'], notes: [] })
+    expect(lamp({ ...INITIAL, ctxPct: 30, limits: [{ kind: 'five_hour', pct: 79 }] }, 0)).toEqual({ tone: 'ok', reasons: [] })
+    expect(lamp({ ...INITIAL, limits: [{ kind: 'five_hour', pct: 80 }] }, 0)).toEqual({ tone: 'warn', reasons: ['session 5 h limit running low'] })
+    expect(lamp({ ...INITIAL, limits: [{ kind: 'seven_day', pct: 95 }] }, 0)).toEqual({ tone: 'bad', reasons: ['weekly limit almost used up'] })
     expect(lamp({ ...INITIAL, ctxPct: 78, limits: [{ kind: 'seven_day', pct: 85 }] }, 0)).toEqual({
       tone: 'bad',
-      reasons: ['context almost full', 'weekly limit running low'], notes: [],
+      reasons: ['context almost full', 'weekly limit running low'],
     })
   })
 

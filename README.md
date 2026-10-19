@@ -80,7 +80,7 @@ Run the tests. Fix what fails, then run them again.
 
 They draw after the built-in ones, with the digits 1 to 9 as hotkeys; a
 digit works from the empty prompt too. Edit the file and the strip picks
-it up at its next redraw. Turn **Prompt buttons** off to keep only yours.
+it up at your next prompt. Turn **Prompt buttons** off to keep only yours.
 
 ## Settings
 

@@ -150,9 +150,9 @@ export const leftOf = (l: Limit): number => clamp(100 - l.pct, 0, 100)
 export const leftTone = (left: number | null): Tone => (left == null ? 'ok' : left <= settings.badAt ? 'bad' : left <= settings.warnAt ? 'warn' : 'ok')
 
 /** Spia e motivo: ambra quando una riserva scende, rossa in zona critica. */
-/** `reasons` is every issue; `notes` only those no gauge already shows, for the header. */
-export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[]; notes: string[] } => {
-  const issues: { tone: Tone; text: string; onBar?: boolean }[] = []
+/** Every issue as a short text, for the terminal line and the report; the worst tone with them. */
+export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[] } => {
+  const issues: { tone: Tone; text: string }[] = []
   const compactAt = snap.compactPct != null ? snap.compactPct / 100 : 0.8
 
   if (snap.ctxPct != null) {
@@ -171,11 +171,11 @@ export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[]; 
   const r = range(snap, now)
   const rt = rangeTone(r)
   if (rt !== 'ok') issues.push({ tone: rt, text: rt === 'bad' ? 'session 5 h runs out within 30 min' : 'session 5 h runs out well before reset' })
-  if (snap.hasError) issues.push({ tone: 'bad', text: 'last turn failed', onBar: false })
+  if (snap.hasError) issues.push({ tone: 'bad', text: 'last turn failed' })
 
   issues.sort((a, b) => RANK[b.tone] - RANK[a.tone])
   const tone = issues[0]?.tone ?? 'ok'
-  return { tone, reasons: issues.map(i => i.text), notes: issues.filter(i => i.onBar === false).map(i => i.text) }
+  return { tone, reasons: issues.map(i => i.text) }
 }
 
 const text = (x: number, y: number, t: string, size: number, fill: string, anchor = 'start', weight = 400) =>
@@ -258,19 +258,6 @@ const lampRow = (x: number, y: number, list: Lamp[]): { svg: string; width: numb
     s += label(cx, l.word, l.on ? toneColor(l.tone) : skin().muted, 'middle')
   })
   return { svg: s, width: list.length * LAMP_PITCH }
-}
-
-/** I motivi che stanno in `max` caratteri, poi il conto di quelli lasciati fuori. */
-export const fitReasons = (reasons: string[], max: number): string => {
-  const kept: string[] = []
-  for (const r of reasons) {
-    const next = [...kept, r].join(', ')
-    if (next.length > max) break
-    kept.push(r)
-  }
-  const rest = reasons.length - kept.length
-  if (kept.length === 0) return rest ? `${rest} warnings` : ''
-  return rest ? `${kept.join(', ')}, +${rest}` : kept.join(', ')
 }
 
 type Row = { name: string; frac: number | null; tone: Tone; value: string; caption: string; marker?: number | null }

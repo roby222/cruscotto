@@ -3,6 +3,7 @@ import type { Register } from 'claude-code'
 
 import type { Snap } from '../types'
 import { ACTIONS, parseButtons } from './actions'
+import type { Action } from './actions'
 import { INITIAL, buildLine, buildReport, buildSvg, pushReading, pushSample, settings, tokensOf } from './dash'
 
 const snapAtom = atom({ plugin: 'cruscotto', key: 'snap' } as const, INITIAL)
@@ -10,11 +11,15 @@ const snapAtom = atom({ plugin: 'cruscotto', key: 'snap' } as const, INITIAL)
 export const register: Register = (on, options) => {
   Object.assign(settings, options)
   let tools = 0
+  // The person's own buttons, re-read at each prompt: edits land at the next prompt, not on every redraw.
+  let extra: Action[] = []
+  const buttonsFile = typeof options.buttonsFile === 'string' ? options.buttonsFile : ''
 
   on('session.start', async ($, e, next) => {
     const stored = Number((await $.store.get('totalTokens')) ?? 0)
     await update($, snapAtom, (s: Snap) => ({ ...s, total: Number.isFinite(stored) ? stored : 0, toolsRunning: 0, agents: [] }))
     await $.command.register({ name: 'cruscotto', description: 'Raw cruscotto readings, to compare with the Usage panel' })
+    if (buttonsFile) extra = parseButtons(await $.fs.read(buttonsFile).catch(() => ''))
     // "resets in", the range and the turbo lamp move with the clock, not with a state write.
     $.clock.every(15_000, () => $.ui.invalidate('ui.render'))
 
@@ -37,6 +42,7 @@ export const register: Register = (on, options) => {
   on('prompt.submit', async ($, e, next) => {
     tools = 0
     await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0 }))
+    if (buttonsFile) extra = parseButtons(await $.fs.read(buttonsFile).catch(() => ''))
 
     return next(e)
   })
@@ -137,8 +143,6 @@ export const register: Register = (on, options) => {
 
     const now = await $.clock.now()
     const { Box, Button, Text } = $.ui.resolve(e)
-    const file = typeof options.buttonsFile === 'string' ? options.buttonsFile : ''
-    const extra = file ? parseButtons(await $.fs.read(file).catch(() => '')) : []
     const buttons = [...(options.buttons === false ? [] : ACTIONS), ...extra].map(a => (
       <Button
         key={a.key}
