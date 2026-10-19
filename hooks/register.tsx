@@ -109,7 +109,7 @@ export const register: Register = (on, options) => {
         ...s,
         model: e.usage?.model ?? s.model,
         trip: s.trip + used,
-        turns: used > 0 ? [...s.turns, used].slice(-8) : s.turns,
+        turns: used > 0 ? [...(s.turns ?? []), used].slice(-8) : s.turns ?? [],
         samples,
         cacheHit: e.usage && input > 0 ? e.usage.cache_read_input_tokens / input : s.cacheHit,
         lastSeconds: Math.round(e.durationMs / 1000),

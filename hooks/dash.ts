@@ -272,8 +272,9 @@ const vuMeter = (x: number, y: number, snap: Snap, now: number): string => {
 const VU_W = VU_SEGMENTS * 8 - 2
 
 /** A spectrum of the last eight turns: one column each, as tall as its tokens against the heaviest of the eight. */
-const spectrum = (x: number, y: number, turns: number[]): string => {
-  const last = turns.slice(-8)
+const spectrum = (x: number, y: number, turns: number[] | undefined): string => {
+  // A session that loaded before this field existed carries no turns yet.
+  const last = (turns ?? []).slice(-8)
   const top = Math.max(1, ...last)
   const words = last.length ? last.map(t => compactTokens(t)).join(', ') : 'none yet'
   let s = `<g><title>Tokens of the last ${last.length || 8} turns, oldest first: ${esc(words)}</title>`
