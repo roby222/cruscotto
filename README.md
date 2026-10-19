@@ -98,7 +98,7 @@ it up at your next prompt. Turn **Prompt buttons** off to keep only yours.
 
 ## Settings
 
-The **⚙ Settings** button, the last of the row, opens `/config`, where the
+The **⚙** button, the last of the row, opens `/config`, where the
 plugin's options live; the same screen appears once at install.
 
 | Option | Default | What it does |

@@ -150,7 +150,7 @@ export const register: Register = (on, options) => {
     const settingsButton = (
       <Button
         key="settings"
-        label="⚙ Settings"
+        label="⚙"
         plain
         onPress={() => void $.command.run({ command: 'config' }).catch(() => $.ui.toast('Type /config to change the cruscotto settings'))}
       />
