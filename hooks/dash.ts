@@ -88,7 +88,8 @@ export const untilReset = (iso: string | undefined, now: number): string => {
 }
 
 export const BURN_WINDOW_MS = 90 * 60 * 1000
-export const BURN_MIN_SPAN_MS = 5 * 60 * 1000
+// A verdict needs a quarter of an hour of readings: a burst of a few minutes, projected over hours, lies.
+export const BURN_MIN_SPAN_MS = 15 * 60 * 1000
 
 export const pushReading = (burn: Reading[], r: Reading): Reading[] =>
   [...burn, r].filter(x => r.t - x.t <= BURN_WINDOW_MS)
@@ -308,7 +309,7 @@ export const buildSvg = (snap: Snap, now: number, working = false): string => {
   // One grammar for every block: small caps label (static), one large live value, a short caption, the bar where there is one.
   const r = range(snap, now)
   const rangeCell: Row = r.status === 'measuring'
-    ? { name: 'Range', frac: null, tone: 'ok', value: 'n/a', caption: 'measuring, 5 min of use' }
+    ? { name: 'Range', frac: null, tone: 'ok', value: 'n/a', caption: 'measuring, 15 min of use' }
     : r.status === 'lasts'
       ? { name: 'Range', frac: null, tone: 'ok', value: `${r.spare}% spare`, caption: 'lasts to the reset' }
       : {
