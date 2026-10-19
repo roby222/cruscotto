@@ -33,8 +33,8 @@ type Skin = { text: string; muted: string; track: string; lampOff: string; ok: s
 export const SKINS: Record<string, Skin> = {
   night: { text: '#e6e4df', muted: '#8f8e8a', track: '#34363a', lampOff: '#3a3b40', ok: '#86b3a4' },
   // amber's healthy color is amber itself, so attention is a warm white and error a saturated red: the two must stand apart from the base.
-  amber: { text: '#f0b84a', muted: '#9a7a3a', track: '#3a2e14', lampOff: '#4a3c1c', ok: '#f0b84a', warn: '#f6f3ea', bad: '#ff4538' },
-  paper: { text: '#2a2a28', muted: '#7a7873', track: '#d9d6cf', lampOff: '#c4c1ba', ok: '#3f8f78' },
+  amber: { text: '#f0b84a', muted: '#a8864a', track: '#3a2e14', lampOff: '#4a3c1c', ok: '#f0b84a', warn: '#f6f3ea', bad: '#ff4538' },
+  paper: { text: '#2a2a28', muted: '#6b6964', track: '#d9d6cf', lampOff: '#c4c1ba', ok: '#3f8f78' },
   mono: { text: '#e6e4df', muted: '#8f8e8a', track: '#34363a', lampOff: '#3a3b40', ok: '#bdbbb5' },
 }
 
