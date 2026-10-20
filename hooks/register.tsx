@@ -30,9 +30,8 @@ export const register: Register = (on, options) => {
   const buttonsFile = typeof options.buttonsFile === 'string' ? options.buttonsFile : ''
 
   on('session.start', async ($, e, next) => {
-    // A reload fires this too: only a conversation with no prompt yet starts over.
-    const fresh = (await $.session.turns()) === 0
-    await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0, agents: [], ...(fresh && { startPct: null }) }))
+    // A reload fires this too: loaded with the context already in use, the start of this conversation is unknown.
+    await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0, agents: [], startPct: null }))
     await $.command.register({ name: 'cruscotto', description: 'Raw cruscotto readings, to compare with the Usage panel' })
     if (buttonsFile) extra = parseButtons(await $.fs.read(buttonsFile).catch(() => ''))
     // "resets in", the range and the rate meter move with the clock, not with a state write; 5 s keeps the meter alive.

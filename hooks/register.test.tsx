@@ -1,6 +1,12 @@
 import type { On } from 'claude-code'
 import { expect, mock, test } from 'claude-code/testing'
 
+import { settings } from './dash'
+
+// Any share above and below the Heavy start threshold, whatever it is set to.
+const ABOVE = settings.heavyStartAt + 3
+const BELOW = settings.heavyStartAt - 6
+
 
 const PROPS = { hasSurvey: false, isWorking: false, maxRows: 20, bodyColumns: 120 } as never
 
@@ -10,7 +16,7 @@ const world = (on: On, turns = 0) => {
   on('session.measure', (_$, e) => ({ changed: e.changed }))
   // Nothing below cruscotto draws: the engine's own empty band, as in a session with no other mod.
   on('ui.render', () => ({ type: 'engine', ref: 0 }))
-  on('command.register', () => ({}) as never)
+  on('command.register', (_$, e) => ({ value: { command: e.name } }) as never)
   on('session.turns', () => ({ value: turns }))
   on('turn.start', (_$, e) => ({ turnId: e.turnId }))
   on('turn.complete', (_$, e) => ({ text: e.answer }))
@@ -59,21 +65,21 @@ test('la prima lettura del context resta come partenza, /clear la azzera', async
   world(on)
   on('session.end', () => ({ sessionId: 's1' }) as never)
   const measure = (percent: number) => $.session.measure({ context: { window: 200000, tokens: percent * 2000, percent }, rateLimits: [], changed: ['context'] } as never)
-  await measure(18)
+  await measure(ABOVE)
   await measure(40)
   const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
-  expect((await ui.find({ type: 'Text', text: /HEAVY 18/ }))).toBeDefined()
+  expect((await ui.find({ type: 'Text', text: new RegExp(`HEAVY ${ABOVE}`) }))).toBeDefined()
   await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } } as never)
-  await measure(9)
+  await measure(BELOW)
   await ui.redraw()
   expect((await ui.find({ type: 'Text', text: /HEAVY/ }))).toBeUndefined()
 })
 
 test('senza lettura di partenza la spia resta spenta: una ricarica a metà conversazione', async ($, on) => {
   world(on, 7)
-  on('session.end', () => ({ sessionId: 's1' }) as never)
-  await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } } as never)
-  await $.session.measure({ context: { window: 200000, tokens: 36000, percent: 18 }, rateLimits: [], changed: ['context'] } as never)
+  on('session.start', (_$, e) => ({ cwd: e.cwd }))
+  await $.session.start({ cwd: '/', surface: 'vscode', isInteractive: true } as never)
+  await $.session.measure({ context: { window: 200000, tokens: ABOVE * 2000, percent: ABOVE }, rateLimits: [], changed: ['context'] } as never)
   const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
   expect((await ui.find({ type: 'Text', text: /HEAVY/ }))).toBeUndefined()
 })

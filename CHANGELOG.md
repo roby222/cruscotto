@@ -3,6 +3,11 @@
 Each entry is a version users receive with `claude plugin update cruscotto`,
 newest first.
 
+## 0.1.8 (2026-10-20)
+
+- Heavy: loading the plugin with the context already in use clears the
+  start reading, so a reload mid-conversation turns the lamp off.
+
 ## 0.1.7 (2026-10-20)
 
 - With a wider drawing of another mod above, the lamps kept their share of
