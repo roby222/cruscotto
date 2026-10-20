@@ -122,10 +122,13 @@ describe('dash helpers', () => {
     const svg = buildSvg(hot, now)
     expect(svg.includes('TOKENS / MIN')).toBe(true)
     expect(svg.includes('LAST TURNS')).toBe(true)
-    expect(buildSvg({ ...hot, live: 7_000 }, now).includes('stroke-opacity')).toBe(true) // the in-progress column pulses; it exists only during a turn
-    // the meter moves only while a turn runs
-    expect(buildSvg(hot, now).includes('<animate')).toBe(false)
-    expect(buildSvg(hot, now, true).includes('<animate')).toBe(true)
+    expect(buildSvg({ ...hot, live: 7_000 }, now).includes('class="live"')).toBe(true) // the in-progress column, outlined; only during a turn
+    expect(buildSvg(hot, now).includes('class="live"')).toBe(false)
+    // the spark steps along the meter only while a turn runs, and never through SMIL, which the VS Code webview refuses
+    expect(buildSvg(hot, now).includes('class="spark"')).toBe(false)
+    expect(buildSvg(hot, now, true).includes('class="spark"')).toBe(true)
+    expect(buildSvg(hot, now, true).includes('<animate')).toBe(false)
+    expect(buildSvg(hot, now + 500, true)).not.toBe(buildSvg(hot, now, true))
   })
 
   test('la skin cambia i colori del quadro', () => {

@@ -29,7 +29,7 @@ colors itself from its compaction tick, drawn once the engine has reported it.
 
 | Meter | Reading |
 |---|---|
-| Tokens / min | Fresh tokens per minute over the last 5 minutes, cache reads excluded; full scale 60 k, the outlined segment is the 20-second peak. A tachometer, not an alarm; while a turn runs a wave of light crosses it |
+| Tokens / min | Fresh tokens per minute over the last 5 minutes, cache reads excluded; full scale 60 k, the outlined segment is the 20-second peak. A tachometer, not an alarm; while a turn runs a spark steps along it |
 | Last turns | One column per turn, the last eight, scaled to the heaviest; the outlined column is the turn in progress |
 | Tokens, Cost | This session's tokens and their value at API prices (nothing is billed on a Pro or Max plan) |
 

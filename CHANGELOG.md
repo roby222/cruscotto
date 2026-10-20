@@ -3,6 +3,13 @@
 Each entry is a version users receive with `claude plugin update cruscotto`,
 newest first.
 
+## 0.1.9 (2026-10-20)
+
+- The strip draws again in VS Code 2.1.304, whose webview refuses an
+  animated picture as too heavy: the wave is now a spark that steps along
+  the meter at each redraw, and the in-progress column no longer pulses.
+- The four big values are smaller.
+
 ## 0.1.8 (2026-10-20)
 
 - Heavy: loading the plugin with the context already in use clears the

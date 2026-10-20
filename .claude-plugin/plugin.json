@@ -1,6 +1,6 @@
 {
   "name": "cruscotto",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Instrument strip above the prompt: context, 5-hour and weekly limits, range to the reset, a tokens-per-minute meter, the last turns, the session's tokens and cost, four lamps and prompt buttons.",
   "author": {
     "name": "Roberto Pisu",

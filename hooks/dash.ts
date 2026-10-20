@@ -292,7 +292,9 @@ export const vuLit = (rate: number): number => Math.min(VU_SEGMENTS, Math.round(
 /** A VU meter of the 5-minute token rate: ten segments, green then amber then red, and a peak-hold outline from the last 20 s. */
 // While a turn runs, the engine gives the plugin no tokens, so the meter cannot measure: it shows the work
 // instead, a wave of light running over the unlit segments (SVG animation, which the VS Code webview draws).
-const WAVE = (i: number) => `<animate attributeName="fill-opacity" values="0;0.9;0" dur="1.6s" begin="${(i * 0.16).toFixed(2)}s" repeatCount="indefinite"/>`
+// No SMIL: the VS Code webview (2.1.304) rasterizes a moving picture 30 times a second, overruns and bars it as too
+// heavy. A spark steps along the meter at each redraw instead: the 5 s clock and every tool call move it.
+const sparkAt = (now: number) => Math.floor(now / 500) % VU_SEGMENTS
 
 const vuMeter = (x: number, y: number, snap: Snap, now: number, working: boolean): string => {
   const rate = ratePerMin(snap.samples, now)
@@ -300,18 +302,15 @@ const vuMeter = (x: number, y: number, snap: Snap, now: number, working: boolean
   const peak = Math.max(...[0, 5, 10, 15, 20].map(sec => vuLit(ratePerMin(snap.samples, now - sec * 1000))))
   // A throughput meter, not an alarm: the strip's amber and red mean attention and stop, and a fast turn is neither.
   const color = (i: number) => (i < 8 ? skin().ok : skin().text)
+  const spark = working ? sparkAt(now) : -1
   let s = '<g>'
   for (let i = 0; i < VU_SEGMENTS; i++) {
     const sx = x + i * 8
-    if (i < lit) {
-      s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${color(i)}"/>`
-      // over lit segments the wave runs dark, so a full meter still shows the work
-      if (working) s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${skin().track}" fill-opacity="0">${WAVE(i)}</rect>`
-    } else if (i === peak - 1 && !working) s += `<rect x="${sx + 0.5}" y="${y + 0.5}" width="5" height="11" rx="1" fill="none" stroke="${color(i)}" stroke-width="1"/>`
-    else {
-      s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${skin().track}"/>`
-      if (working) s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${color(i)}" fill-opacity="0">${WAVE(i)}</rect>`
-    }
+    // over a lit segment the spark is dark, so a full meter still shows the work
+    if (i === spark) s += `<rect class="spark" x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${i < lit ? skin().track : color(i)}" fill-opacity="0.9"/>`
+    else if (i < lit) s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${color(i)}"/>`
+    else if (i === peak - 1 && !working) s += `<rect x="${sx + 0.5}" y="${y + 0.5}" width="5" height="11" rx="1" fill="none" stroke="${color(i)}" stroke-width="1"/>`
+    else s += `<rect x="${sx}" y="${y}" width="6" height="12" rx="1" fill="${skin().track}"/>`
   }
   return s + '</g>'
 }
@@ -330,7 +329,7 @@ const spectrum = (x: number, y: number, turns: number[] | undefined, live = 0): 
     const h = t == null ? 1 : Math.max(1, Math.round((t / top) * 12))
     const isLive = live > 0 && i === 7
     s += isLive
-      ? `<rect x="${x + i * 7 + 0.5}" y="${y + 12 - h + 0.5}" width="4" height="${Math.max(1, h - 1)}" rx="1" fill="none" stroke="${skin().ok}" stroke-width="1"><animate attributeName="stroke-opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite"/></rect>`
+      ? `<rect x="${x + i * 7 + 0.5}" y="${y + 12 - h + 0.5}" width="4" height="${Math.max(1, h - 1)}" rx="1" fill="none" stroke="${skin().ok}" stroke-width="1" class="live"/>`
       : `<rect x="${x + i * 7}" y="${y + 12 - h}" width="5" height="${h}" rx="1" fill="${t == null ? skin().track : skin().ok}"/>`
   }
   return s + '</g>'
@@ -397,7 +396,7 @@ export const buildSvg = (snap: Snap, now: number, working = false): string => {
   // Tiles: label on the row's top baseline, the live value 22 below, the caption 36 below, the bar at 44.
   const cell = (c: Row, x: number, y: number, w: number) => {
     s += text(x, y, c.name.toUpperCase(), 7, skin().muted, 'start', 600)
-    s += text(x, y + 22, c.value, 18, c.tone === 'ok' ? skin().text : toneColor(c.tone), 'start', 700)
+    s += text(x, y + 22, c.value, 15, c.tone === 'ok' ? skin().text : toneColor(c.tone), 'start', 700)
     s += text(x, y + 36, c.caption, 9, skin().muted)
     if (c.frac != null || c.marker != null) s += bar(x, y + 44, w, c.frac, c.tone, c.marker)
   }
