@@ -293,7 +293,7 @@ export const vuLit = (rate: number): number => Math.min(VU_SEGMENTS, Math.round(
 // While a turn runs, the engine gives the plugin no tokens, so the meter cannot measure: it shows the work
 // instead, a wave of light running over the unlit segments (SVG animation, which the VS Code webview draws).
 // No SMIL: the VS Code webview (2.1.304) rasterizes a moving picture 30 times a second, overruns and bars it as too
-// heavy. A spark steps along the meter at each redraw instead: the 5 s clock and every tool call move it.
+// heavy. A spark steps along the meter at each redraw instead: the 2 s clock and every tool call move it.
 const sparkAt = (now: number) => Math.floor(now / 500) % VU_SEGMENTS
 
 const vuMeter = (x: number, y: number, snap: Snap, now: number, working: boolean): string => {

@@ -34,10 +34,11 @@ export const register: Register = (on, options) => {
     await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0, agents: [], startPct: null }))
     await $.command.register({ name: 'cruscotto', description: 'Raw cruscotto readings, to compare with the Usage panel' })
     if (buttonsFile) extra = parseButtons(await $.fs.read(buttonsFile).catch(() => ''))
-    // "resets in", the range and the rate meter move with the clock, not with a state write; 5 s keeps the meter alive.
+    // "resets in", the range and the spark move with the clock, not with a state write. 2 s is cheap: an unchanged
+    // drawing is not rasterized again, and the source changes only while a turn runs or a minute turns over.
     if (!ticking) {
       ticking = true
-      $.clock.every(5_000, () => $.ui.invalidate('ui.render'))
+      $.clock.every(2_000, () => $.ui.invalidate('ui.render'))
     }
 
     return next(e)

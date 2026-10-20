@@ -3,6 +3,11 @@
 Each entry is a version users receive with `claude plugin update cruscotto`,
 newest first.
 
+## 0.1.10 (2026-10-21)
+
+- The band redraws every 2 seconds instead of 5: the spark steps more often
+  while a turn runs.
+
 ## 0.1.9 (2026-10-20)
 
 - The strip draws again in VS Code 2.1.304, whose webview refuses an
