@@ -39,6 +39,21 @@ export const SKINS: Record<string, Skin> = {
 }
 
 /** The userConfig values; `register` copies the plugin's options over these defaults. */
+/** One line per item of the strip, for the ? panel: what the word means, nothing more. */
+export const HELP: [string, string][] = [
+  ['Context', 'how full the context window is; the tick is where auto-compaction starts'],
+  ['Session 5 h', 'share of the 5-hour quota left, and when it resets'],
+  ['Range', 'at the pace of the last 90 minutes, does the 5-hour quota last to its reset? spare share, or time to empty and the wait after'],
+  ['Weekly', 'share of the 7-day quota left, and when it resets'],
+  ['Tokens / min', 'fresh tokens per minute over the last 5 minutes, cache reads excluded; full scale 60 k'],
+  ['Last turns', 'one column per turn, the last eight; the outlined one is in progress'],
+  ['Tokens, Cost', 'this session, cost at API prices (nothing billed on Pro or Max)'],
+  ['Failed', 'the last turn ended in error'],
+  ['Cold', 'cache hit of the last turn under the threshold, as after a compaction'],
+  ['Heavy', 'the conversation started with the context already that full: instructions, skills and tools'],
+  ['Tools, Agents', 'tool calls and subagents running now, with their count'],
+]
+
 export const settings = { skin: 'night', warnAt: 20, badAt: 5, lamps: true, coldCacheBelow: 50, heavyStartAt: 15 }
 const skin = (): Skin => SKINS[settings.skin] ?? (SKINS.night as Skin)
 const FONT = "'Segoe UI','Helvetica Neue',Arial,sans-serif"

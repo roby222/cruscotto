@@ -3,6 +3,14 @@
 Each entry is a version users receive with `claude plugin update cruscotto`,
 newest first.
 
+## 0.1.6 (2026-10-20)
+
+- A ? button: one line per tile, meter and lamp, in place of the strip,
+  Done to come back.
+- Heavy no longer lights after a plugin reload mid-conversation: the start
+  reading is taken only within the first exchange, and a reload no longer
+  discards it.
+
 ## 0.1.5 (2026-10-20)
 
 - Heavy lamp: lights amber, with the share, when a conversation's first

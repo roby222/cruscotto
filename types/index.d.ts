@@ -37,7 +37,7 @@ export type Snap = {
 
 declare module 'claude-code' {
   interface PluginState {
-    /** `settingsOpen`: the gear shows the plugin's settings in place of the strip. */
-    cruscotto: { snap: Snap; settingsOpen: boolean }
+    /** `panel`: what the gear or the question mark shows in place of the strip, '' for the strip. */
+    cruscotto: { snap: Snap; panel: '' | 'settings' | 'help' }
   }
 }

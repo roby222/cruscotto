@@ -4,13 +4,14 @@ import { expect, mock, test } from 'claude-code/testing'
 
 const PROPS = { hasSurvey: false, isWorking: false, maxRows: 20, bodyColumns: 120 } as never
 
-const world = (on: On) => {
+const world = (on: On, turns = 0) => {
   mock.clock(on, { now: 1_000_000 })
   on('store.get', () => ({ value: undefined }))
   on('session.measure', (_$, e) => ({ changed: e.changed }))
   // Nothing below cruscotto draws: the engine's own empty band, as in a session with no other mod.
   on('ui.render', () => ({ type: 'engine', ref: 0 }))
   on('command.register', () => ({}) as never)
+  on('session.turns', () => ({ value: turns }))
   on('turn.start', (_$, e) => ({ turnId: e.turnId }))
   on('turn.complete', (_$, e) => ({ text: e.answer }))
   on('session.usage', () => ({
@@ -66,6 +67,33 @@ test('la prima lettura del context resta come partenza, /clear la azzera', async
   await measure(9)
   await ui.redraw()
   expect((await ui.find({ type: 'Text', text: /HEAVY/ }))).toBeUndefined()
+})
+
+test('senza lettura di partenza la spia resta spenta: una ricarica a metà conversazione', async ($, on) => {
+  world(on, 7)
+  on('session.end', () => ({ sessionId: 's1' }) as never)
+  await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } } as never)
+  await $.session.measure({ context: { window: 200000, tokens: 36000, percent: 18 }, rateLimits: [], changed: ['context'] } as never)
+  const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
+  expect((await ui.find({ type: 'Text', text: /HEAVY/ }))).toBeUndefined()
+})
+
+test('il punto interrogativo mostra una riga per voce al posto della striscia', async ($, on) => {
+  world(on)
+  for (const surface of ['terminal', 'vscode'] as const) {
+    const ui = await $.ui.mount({ plugin: 'cruscotto', surface, component: 'AbovePrompt', props: PROPS })
+    const strip = surface === 'terminal' ? { type: 'Text', text: /tok\/min/ } : { type: 'Svg' }
+    expect((await ui.find({ key: 'help' }))?.props.label).toBe('?')
+    await ui.press({ key: 'help' })
+    expect((await ui.find({ key: 'help' }))?.props.label).toBe('Done')
+    expect(await ui.find(strip)).toBeUndefined()
+    expect(await ui.find({ key: 'risolvi' })).toBeUndefined()
+    expect(await ui.find({ key: 'settings' })).toBeUndefined()
+    expect(await ui.find({ type: 'Text', text: /^Range$/ })).toBeDefined()
+    await ui.press({ key: 'help' })
+    expect(await ui.find(strip)).toBeDefined()
+    await ui.unmount()
+  }
 })
 
 test('i pulsanti inviano il prompt di risolvi101', async ($, on) => {

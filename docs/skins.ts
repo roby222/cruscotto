@@ -32,8 +32,8 @@ for (const skin of Object.keys(SKINS)) {
   const t = SKINS[skin]
   let x = w
   let buttons = ''
-  for (const label of ['⚙', 'Hurry up', 'Commit and push', 'Go ahead']) {
-    const bw = label === '⚙' ? 16 : label.length * 4.4 + 14
+  for (const label of ['⚙', '?', 'Hurry up', 'Commit and push', 'Go ahead']) {
+    const bw = label.length === 1 ? 16 : label.length * 4.4 + 14
     x -= bw
     buttons += `<rect x="${x}" y="9" width="${bw}" height="14" rx="3" fill="${t.track}"/>`
       + `<text x="${x + bw / 2}" y="19" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="8" font-weight="600" fill="${t.text}" text-anchor="middle">${label}</text>`

@@ -4,7 +4,7 @@ import type { ConfigRow, ConfigValue, Register } from 'claude-code'
 import type { Snap } from '../types'
 import { ACTIONS, parseButtons } from './actions'
 import type { Action } from './actions'
-import { INITIAL, LAMPS_SHARE, buildLampsSvg, buildLine, buildReport, buildSvg, lampWords, lamps, freshOf, pushReading, pushSample, settings, tokensOf } from './dash'
+import { HELP, INITIAL, LAMPS_SHARE, buildLampsSvg, buildLine, buildReport, buildSvg, lampWords, lamps, freshOf, pushReading, pushSample, settings, tokensOf } from './dash'
 
 /** Whether the engine's own band is still in the tree handed up: then no mod below replaced it with a drawing of its own. */
 const holdsEngine = (el: unknown): boolean => {
@@ -16,7 +16,7 @@ const holdsEngine = (el: unknown): boolean => {
 
 const snapAtom = atom({ plugin: 'cruscotto', key: 'snap' } as const, INITIAL)
 // In $.state, not a module variable: every change of an option reloads the module, and the panel stays open.
-const openAtom = atom({ plugin: 'cruscotto', key: 'settingsOpen' } as const, false)
+const panelAtom = atom({ plugin: 'cruscotto', key: 'panel' } as const, '' as '' | 'settings' | 'help')
 const PREFIX = 'cruscotto.'
 
 export const register: Register = (on, options) => {
@@ -30,7 +30,9 @@ export const register: Register = (on, options) => {
   const buttonsFile = typeof options.buttonsFile === 'string' ? options.buttonsFile : ''
 
   on('session.start', async ($, e, next) => {
-    await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0, agents: [], startPct: null }))
+    // A reload fires this too: only a conversation with no prompt yet starts over.
+    const fresh = (await $.session.turns()) === 0
+    await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0, agents: [], ...(fresh && { startPct: null }) }))
     await $.command.register({ name: 'cruscotto', description: 'Raw cruscotto readings, to compare with the Usage panel' })
     if (buttonsFile) extra = parseButtons(await $.fs.read(buttonsFile).catch(() => ''))
     // "resets in", the range and the rate meter move with the clock, not with a state write; 5 s keeps the meter alive.
@@ -87,6 +89,8 @@ export const register: Register = (on, options) => {
   on('session.measure', async ($, e, next) => {
     const now = await $.clock.now()
     const five = e.rateLimits.find(r => r.kind === 'five_hour')
+    // The start reading belongs to the first exchange; later, with none on record, the lamp stays dark rather than guess.
+    const opening = (await $.session.turns()) <= 1
 
     // Mid-turn, each model call grows the context: that growth is a live sample for the rate meter and the
     // spectrum's last column, replaced by the exact usage when the turn completes.
@@ -97,7 +101,7 @@ export const register: Register = (on, options) => {
       samples: grown > 0 ? pushSample(s.samples, { t: now, tokens: grown, live: true }) : s.samples,
       live: grown > 0 ? (s.live ?? 0) + grown : s.live ?? 0,
       ctxPct: e.context.percent ?? s.ctxPct,
-      startPct: s.startPct ?? e.context.percent ?? null,
+      startPct: s.startPct ?? (opening ? e.context.percent ?? null : null),
       ctxTokens: e.context.tokens ?? s.ctxTokens,
       ctxWindow: e.context.window,
       limits: e.rateLimits.map(r => ({ kind: r.kind, pct: r.percentUsed, resetsAt: r.resetsAt })),
@@ -187,19 +191,38 @@ export const register: Register = (on, options) => {
         )}
       />
     ))
-    const isOpen = await read($, openAtom)
-    // The gear opens this plugin's own rows of the engine's settings, in place of the strip.
-    const settingsButton = (
-      <Button key="settings" label={isOpen ? 'Done' : '⚙'} plain onPress={() => void update($, openAtom, (o: boolean) => !o)} />
+    const panel = await read($, panelAtom)
+    // The question mark and the gear each open a panel in place of the strip: a line per item, or this plugin's
+    // own rows of the engine's settings. Open, only that panel's Done remains.
+    const toggle = (which: 'settings' | 'help') => (
+      <Button key={which} label={panel === which ? 'Done' : which === 'help' ? '?' : '⚙'} plain onPress={() => void update($, panelAtom, (p: string) => (p === which ? '' : which))} />
     )
+    const settingsButton = toggle('settings')
+    const isOpen = panel === 'settings'
     // VS Code paints Buttons in its theme colors whatever the props (only key, label and dimColor reach
     // it). The row is one compact group at the right edge, the gear last; the host's own padding frames it.
     const buttonGroup = (
       <Box flexDirection="row" flexGrow={1} justifyContent="flex-end" gap={1}>
         {buttons}
+        {toggle('help')}
         {settingsButton}
       </Box>
     )
+
+    if (panel === 'help') {
+      return (
+        <Box flexDirection="column" gap={theirs ? 1 : 0}>
+          {theirs}
+          {HELP.map(([word, text]) => (
+            <Box key={word} flexDirection="row" gap={1}>
+              <Box width={e.surface === 'terminal' ? 14 : '16%'}><Text bold>{word}</Text></Box>
+              <Text>{text}</Text>
+            </Box>
+          ))}
+          <Box flexDirection="row" justifyContent="flex-end">{toggle('help')}</Box>
+        </Box>
+      )
+    }
 
     if (isOpen) {
       // The same rows /config holds for this plugin: the values stay in the engine's settings.
