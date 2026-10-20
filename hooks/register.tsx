@@ -154,12 +154,13 @@ export const register: Register = (on, options) => {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    // Mods below draw first; with nothing below, next(e) is the engine's own empty band, and cruscotto draws
-    // whenever that band is still in the tree handed up. The price of asking first: every redraw, the 5 s
-    // tick included, runs the hooks below, and the strip waits for the slowest of them.
+    // Mods below draw first; with nothing below, next(e) is the engine's own empty band. When a mod drew,
+    // its tree goes on top of cruscotto's, as a child of the same column, so both show. The price of asking
+    // first: every redraw, the 5 s tick included, runs the hooks below, and the strip waits for the slowest.
     // shortcut: a mod below that only frames the empty band loses its frame when cruscotto draws; nest ours inside theirs if such a mod appears.
     const below = await next(e)
-    if (!holdsEngine(below) || e.props.hasSurvey) return below
+    if (e.props.hasSurvey) return below
+    const theirs = holdsEngine(below) ? null : below
     // Read the state only when drawing: a read here subscribes the band to every state write.
     const snap = await read($, snapAtom)
 
@@ -225,6 +226,7 @@ export const register: Register = (on, options) => {
 
       return (
         <Box flexDirection="column" gap={1}>
+          {theirs}
           {rows.length === 0 && <Text>No cruscotto settings found: type /config</Text>}
           {rows.map(r => (
             <Box key={r.key} flexDirection="row" alignItems="center" gap={1}>
@@ -240,6 +242,7 @@ export const register: Register = (on, options) => {
     if (e.surface === 'terminal') {
       return (
         <Box flexDirection="column">
+          {theirs}
           <Text>{buildLine(snap, now)}</Text>
           <Box flexDirection="row">{buttonGroup}</Box>
         </Box>
@@ -255,6 +258,7 @@ export const register: Register = (on, options) => {
 
     return (
       <Box flexDirection="column" alignSelf="flex-start">
+        {theirs}
         <Svg source={buildSvg(snap, now, Boolean(e.props.isWorking))} alt={buildLine(snap, now)} />
         <Box flexDirection="row" alignItems="center">
           {lampCell}

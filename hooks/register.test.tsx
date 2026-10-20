@@ -126,16 +126,17 @@ test('disegna quando sotto c\'è solo una cornice o un mod che passa', { plugins
   expect(await ui.find({ type: 'Svg' })).toBeDefined()
 })
 
-test('cede la banda a chi ha qualcosa da mostrare', { plugins: [other] }, async ($, on) => {
+test('mostra il disegno di un altro mod sopra la propria striscia', { plugins: [other] }, async ($, on) => {
   world(on)
 
-  for (const surface of ['terminal', 'vscode'] as const) {
-    const ui = await $.ui.mount({ plugin: 'cruscotto', surface, component: 'AbovePrompt', props: PROPS })
-    expect(await ui.find({ type: 'Text', text: /another mod/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /tok\/min/ })).toBeUndefined()
-    expect(await ui.find({ type: 'Svg' })).toBeUndefined()
-    await ui.unmount()
-  }
+  let ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
+  expect(await ui.find({ type: 'Text', text: /another mod/ })).toBeDefined()
+  expect(String((await ui.find({ type: 'Svg' }) as unknown as { props: { source: string } }).props.source)).toContain('CONTEXT')
+  await ui.unmount()
+
+  ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
+  expect(await ui.find({ type: 'Text', text: /another mod/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /tok\/min/ })).toBeDefined()
 })
 
 // A mod that draws while it has something, then passes. Inline mods run sandboxed, with no reach into the
@@ -151,15 +152,16 @@ const toggling = {
   },
 }
 
-test('riprende la banda quando chi stava sotto passa di nuovo', { plugins: [toggling] }, async ($, on) => {
+test('il disegno altrui va e viene, la striscia resta', { plugins: [toggling] }, async ($, on) => {
   world(on)
 
   let ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: { ...(PROPS as object), maxRows: 1 } as never })
   expect(await ui.find({ type: 'Text', text: /busy below/ })).toBeDefined()
-  expect(await ui.find({ type: 'Svg' })).toBeUndefined()
+  expect(await ui.find({ type: 'Svg' })).toBeDefined()
   await ui.unmount()
 
   ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
+  expect(await ui.find({ type: 'Text', text: /busy below/ })).toBeUndefined()
   expect(await ui.find({ type: 'Svg' })).toBeDefined()
 })
 
@@ -168,6 +170,7 @@ test('con un sondaggio nella banda non disegna', async ($, on) => {
 
   const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: { ...(PROPS as object), hasSurvey: true } as never })
   expect(await ui.find({ type: 'Svg' })).toBeUndefined()
+  expect(await ui.find({ type: 'Text', text: /tok\/min/ })).toBeUndefined()
 })
 
 // The rows /config holds: cruscotto's own and one of the engine's, which the panel leaves out.

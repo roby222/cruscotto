@@ -3,6 +3,12 @@
 Each entry is a version users receive with `claude plugin update cruscotto`,
 newest first.
 
+## 0.1.2 (2026-10-20)
+
+- Another mod's drawing in the band no longer hides the strip: it sits
+  above it, in the same column, and the strip stays. A survey still takes
+  the band alone.
+
 ## 0.1.1 (2026-10-19)
 
 - Range projects the pace as the median of the paces between every pair of

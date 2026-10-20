@@ -41,9 +41,8 @@ colors itself from its compaction tick, drawn once the engine has reported it.
 | Agents | subagents are running, with their count |
 
 `/cruscotto` prints the raw readings. The strip is an image, so hovering
-shows nothing. The band is shared: cruscotto draws when nothing else in
-the band does; a mod that draws there takes it, and cruscotto is back when
-that mod passes.
+shows nothing. The band is shared: when another mod draws there, its
+drawing sits above the strip, both in view.
 
 ## Buttons
 
