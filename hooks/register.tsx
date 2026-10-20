@@ -195,13 +195,14 @@ export const register: Register = (on, options) => {
 
     if (isOpen) {
       // The same rows /config holds for this plugin: the values stay in the engine's settings.
-      const rows = (await $.config.list().catch(() => [] as ConfigRow[])).filter(r => r.key.startsWith(PREFIX))
+      const listed = await $.config.list().then(rows => ({ rows, error: '' }), err => ({ rows: [] as ConfigRow[], error: String(err) }))
+      const rows = listed.rows.filter(r => r.key.startsWith(PREFIX) || r.provider.plugin === 'cruscotto')
       const els = $.ui.resolve(e)
       const Input = 'Input' in els ? els.Input : undefined
       const set = async (key: string, value: ConfigValue) => {
         const r = await $.config.set({ key, value })
         if (r.deny) return void $.ui.toast(r.deny)
-        Object.assign(settings, { [key.slice(PREFIX.length)]: value })
+        Object.assign(settings, { [key.slice(key.lastIndexOf('.') + 1)]: value })
         $.ui.invalidate('ui.render')
       }
       const pick = (r: ConfigRow, value: ConfigValue, label: string) => (
@@ -227,14 +228,14 @@ export const register: Register = (on, options) => {
       return (
         <Box flexDirection="column" gap={1}>
           {theirs}
-          {rows.length === 0 && <Text>No cruscotto settings found: type /config</Text>}
+          {rows.length === 0 && <Text>{listed.error || `No cruscotto settings among ${listed.rows.length} /config rows: type /config`}</Text>}
           {rows.map(r => (
             <Box key={r.key} flexDirection="row" alignItems="center" gap={1}>
               <Box width={e.surface === 'terminal' ? 22 : '28%'}><Text>{r.label}</Text></Box>
               {control(r)}
             </Box>
           ))}
-          <Box flexDirection="row">{buttonGroup}</Box>
+          <Box flexDirection="row" justifyContent="flex-end">{settingsButton}</Box>
         </Box>
       )
     }

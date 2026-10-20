@@ -130,8 +130,8 @@ for (const surface of SURFACES) {
     expect(await ui.find(strip)).toBeUndefined()
     expect(await ui.find({ type: 'Text', text: /^Verbose$/ })).toBeUndefined()
     for (const r of ROWS.slice(1)) expect(await ui.find({ type: 'Text', text: new RegExp(`^${r.label.replace(/[()]/g, '\\$&')}$`) })).toBeDefined()
-    // The prompt buttons stay usable while the settings are open.
-    expect(await label(ui, 'risolvi')).toBe('Go ahead')
+    // Only Done stays while the settings are open.
+    expect(await label(ui, 'risolvi')).toBeUndefined()
 
     await ui.press({ key: 'settings' })
     expect(await label(ui, 'settings')).toBe('⚙')

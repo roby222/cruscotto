@@ -50,7 +50,7 @@ drawing sits above the strip, both in view.
 - **Commit and push**: stage, commit in the style of the last commits, push;
   no force push, no rebase.
 - **Hurry up**: speed up, parallelize, say why it is slow.
-- **⚙**: shows the cruscotto settings in place of the strip; **Done** closes them.
+- **⚙**: shows the cruscotto settings in place of the strip and the buttons; **Done** closes them.
 
 When a hook refuses a button's prompt, a toast gives the reason instead of
 the prompt vanishing.

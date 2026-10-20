@@ -3,6 +3,12 @@
 Each entry is a version users receive with `claude plugin update cruscotto`,
 newest first.
 
+## 0.1.4 (2026-10-20)
+
+- The settings panel shows only Done, the prompt buttons return with the
+  strip. Its rows are found by owner, not only by key, and an empty panel
+  says what `/config` returned.
+
 ## 0.1.3 (2026-10-20)
 
 - A blank row between another mod's drawing and the strip; none when the
