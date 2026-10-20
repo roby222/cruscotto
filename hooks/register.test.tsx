@@ -145,6 +145,16 @@ const other = {
 }
 
 // A mod that only frames whatever is beneath it, and one that passes while idle.
+const wide = {
+  name: 'wide',
+  register(on: On) {
+    on('ui.render', { component: 'AbovePrompt' }, async ($, e) => {
+      const { Box, Text } = $.ui.resolve(e)
+      return <Box width="100%"><Text>wide below</Text></Box>
+    })
+  },
+}
+
 const frame = {
   name: 'frame',
   register(on: On) {
@@ -205,6 +215,18 @@ test('il disegno altrui va e viene, la striscia resta', { plugins: [toggling] },
   ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
   expect(await ui.find({ type: 'Text', text: /busy below/ })).toBeUndefined()
   expect(await ui.find({ type: 'Svg' })).toBeDefined()
+})
+
+test('con un disegno altrui più largo, le lampade restano nel box largo quanto la striscia', { plugins: [wide] }, async ($, on) => {
+  world(on)
+  const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
+  expect(await ui.find({ type: 'Text', text: /wide below/ })).toBeDefined()
+  const own = await ui.find({ key: 'own' })
+  expect(own?.props.alignSelf).toBe('flex-start')
+  const inside = JSON.stringify((own as unknown as { children: unknown }).children)
+  expect(inside).toContain('tok/min') // the strip's alt text
+  expect(inside).toContain('"lamps"') // the lamp cell, whose width is a share of this box
+  expect(inside).not.toContain('wide below')
 })
 
 test('con un sondaggio nella banda non disegna', async ($, on) => {

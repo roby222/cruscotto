@@ -3,6 +3,11 @@
 Each entry is a version users receive with `claude plugin update cruscotto`,
 newest first.
 
+## 0.1.7 (2026-10-20)
+
+- With a wider drawing of another mod above, the lamps kept their share of
+  that width and grew; they now take it from the strip's own box.
+
 ## 0.1.6 (2026-10-20)
 
 - A ? button: one line per tile, meter and lamp, in place of the strip,

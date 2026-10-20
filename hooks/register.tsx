@@ -289,12 +289,15 @@ export const register: Register = (on, options) => {
       : []
 
     return (
-      <Box flexDirection="column" alignSelf="flex-start" gap={theirs ? 1 : 0}>
+      <Box flexDirection="column" gap={theirs ? 1 : 0}>
         {theirs}
-        <Svg source={buildSvg(snap, now, Boolean(e.props.isWorking))} alt={buildLine(snap, now)} />
-        <Box flexDirection="row" alignItems="center">
-          {lampCell}
-          {buttonGroup}
+        {/* Our own box, as wide as the strip: the lamp cell's share is of this width, not of a wider drawing above. */}
+        <Box key="own" flexDirection="column" alignSelf="flex-start">
+          <Svg source={buildSvg(snap, now, Boolean(e.props.isWorking))} alt={buildLine(snap, now)} />
+          <Box flexDirection="row" alignItems="center">
+            {lampCell}
+            {buttonGroup}
+          </Box>
         </Box>
       </Box>
     )
