@@ -241,7 +241,7 @@ export const register: Register = (on, options) => {
 
     if (e.surface === 'terminal') {
       return (
-        <Box flexDirection="column">
+        <Box flexDirection="column" gap={theirs ? 1 : 0}>
           {theirs}
           <Text>{buildLine(snap, now)}</Text>
           <Box flexDirection="row">{buttonGroup}</Box>
@@ -257,7 +257,7 @@ export const register: Register = (on, options) => {
       : []
 
     return (
-      <Box flexDirection="column" alignSelf="flex-start">
+      <Box flexDirection="column" alignSelf="flex-start" gap={theirs ? 1 : 0}>
         {theirs}
         <Svg source={buildSvg(snap, now, Boolean(e.props.isWorking))} alt={buildLine(snap, now)} />
         <Box flexDirection="row" alignItems="center">

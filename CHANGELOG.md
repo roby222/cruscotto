@@ -3,6 +3,11 @@
 Each entry is a version users receive with `claude plugin update cruscotto`,
 newest first.
 
+## 0.1.3 (2026-10-20)
+
+- A blank row between another mod's drawing and the strip; none when the
+  band is cruscotto's alone.
+
 ## 0.1.2 (2026-10-20)
 
 - Another mod's drawing in the band no longer hides the strip: it sits
