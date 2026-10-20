@@ -54,6 +54,20 @@ test('misure e turno finiscono nel quadro', async ($, on) => {
   expect(String((svg as unknown as { props: { source: string } }).props.source)).toContain('WEEKLY FABLE')
 })
 
+test('la prima lettura del context resta come partenza, /clear la azzera', async ($, on) => {
+  world(on)
+  on('session.end', () => ({ sessionId: 's1' }) as never)
+  const measure = (percent: number) => $.session.measure({ context: { window: 200000, tokens: percent * 2000, percent }, rateLimits: [], changed: ['context'] } as never)
+  await measure(18)
+  await measure(40)
+  const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
+  expect((await ui.find({ type: 'Text', text: /HEAVY 18/ }))).toBeDefined()
+  await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } } as never)
+  await measure(9)
+  await ui.redraw()
+  expect((await ui.find({ type: 'Text', text: /HEAVY/ }))).toBeUndefined()
+})
+
 test('i pulsanti inviano il prompt di risolvi101', async ($, on) => {
   world(on)
   const sent: string[] = []

@@ -1,6 +1,6 @@
 {
   "name": "cruscotto",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Instrument strip above the prompt: context, 5-hour and weekly limits, range to the reset, a tokens-per-minute meter, the last turns, the session's tokens and cost, four lamps and prompt buttons.",
   "author": {
     "name": "Roberto Pisu",
@@ -46,6 +46,12 @@
       "title": "Cold cache lamp (%)",
       "description": "The cold lamp lights amber when the cache hit of the last turn is under this share.",
       "default": 50
+    },
+    "heavyStartAt": {
+      "type": "number",
+      "title": "Heavy start (%)",
+      "description": "The heavy lamp lights amber when the first context reading of a conversation is at or above this share: the fixed load of instructions, skills and tools.",
+      "default": 15
     },
     "buttons": {
       "type": "boolean",

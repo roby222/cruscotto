@@ -145,6 +145,9 @@ describe('dash helpers', () => {
     const busy = { ...quiet, hasError: true, toolsRunning: 3, agents: ['a1'], cacheHit: 0.2, usd: 12 }
     expect(lampWords(lamps(busy, now))).toEqual(['FAILED', 'COLD', 'TOOLS 3', 'AGENTS 1'])
     expect(lamps(busy, now).find(l => l.key === 'tools')?.count).toBe(3)
+    // a heavy start lights from the threshold, with the share
+    expect(lampWords(lamps({ ...quiet, startPct: 14 }, now))).toEqual([])
+    expect(lampWords(lamps({ ...quiet, startPct: 15 }, now))).toEqual(['HEAVY 15'])
     // cold threshold follows the setting
     Object.assign(settings, { coldCacheBelow: 10 })
     expect(lampWords(lamps(busy, now))).toEqual(['FAILED', 'TOOLS 3', 'AGENTS 1'])

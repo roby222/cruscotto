@@ -3,6 +3,14 @@
 Each entry is a version users receive with `claude plugin update cruscotto`,
 newest first.
 
+## 0.1.5 (2026-10-20)
+
+- Heavy lamp: lights amber, with the share, when a conversation's first
+  context reading is at or above the Heavy start threshold (15% by
+  default): the fixed load of instructions, skills and tools. Reset at
+  `/clear` and on a resume.
+- The buttons file field says Use file instead of Save.
+
 ## 0.1.4 (2026-10-20)
 
 - The settings panel shows only Done, the prompt buttons return with the

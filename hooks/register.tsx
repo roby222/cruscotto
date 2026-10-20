@@ -30,7 +30,7 @@ export const register: Register = (on, options) => {
   const buttonsFile = typeof options.buttonsFile === 'string' ? options.buttonsFile : ''
 
   on('session.start', async ($, e, next) => {
-    await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0, agents: [] }))
+    await update($, snapAtom, (s: Snap) => ({ ...s, toolsRunning: 0, agents: [], startPct: null }))
     await $.command.register({ name: 'cruscotto', description: 'Raw cruscotto readings, to compare with the Usage panel' })
     if (buttonsFile) extra = parseButtons(await $.fs.read(buttonsFile).catch(() => ''))
     // "resets in", the range and the rate meter move with the clock, not with a state write; 5 s keeps the meter alive.
@@ -38,6 +38,13 @@ export const register: Register = (on, options) => {
       ticking = true
       $.clock.every(5_000, () => $.ui.invalidate('ui.render'))
     }
+
+    return next(e)
+  })
+
+  // /clear and a resume start a new conversation without a session.start: its first reading is the next one.
+  on('session.end', async ($, e, next) => {
+    if (e.reason === 'clear' || e.reason === 'resume') await update($, snapAtom, (s: Snap) => ({ ...s, startPct: null }))
 
     return next(e)
   })
@@ -90,6 +97,7 @@ export const register: Register = (on, options) => {
       samples: grown > 0 ? pushSample(s.samples, { t: now, tokens: grown, live: true }) : s.samples,
       live: grown > 0 ? (s.live ?? 0) + grown : s.live ?? 0,
       ctxPct: e.context.percent ?? s.ctxPct,
+      startPct: s.startPct ?? e.context.percent ?? null,
       ctxTokens: e.context.tokens ?? s.ctxTokens,
       ctxWindow: e.context.window,
       limits: e.rateLimits.map(r => ({ kind: r.kind, pct: r.percentUsed, resetsAt: r.resetsAt })),
@@ -221,7 +229,7 @@ export const register: Register = (on, options) => {
           ]
         }
         return Input
-          ? <Input key={r.key} value={String(r.value ?? '')} placeholder="Path to a Markdown file" submitLabel="Save" onSubmit={v => void set(r.key, v.trim())} />
+          ? <Input key={r.key} value={String(r.value ?? '')} placeholder="Path to a Markdown file" submitLabel="Use file" onSubmit={v => void set(r.key, v.trim())} />
           : <Text>{String(r.value || '—')}</Text>
       }
 

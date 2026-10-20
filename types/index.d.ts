@@ -13,6 +13,8 @@ export type Snap = {
   ctxTokens: number | null
   ctxWindow: number | null
   compactPct: number | null
+  /** The first context reading of this conversation: the fixed load of instructions, skills and tools. */
+  startPct: number | null
   limits: Limit[]
   usd: number | null
   /** Tokens of this session, every turn and subagent turn summed. */

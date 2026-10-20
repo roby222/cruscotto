@@ -8,6 +8,7 @@ export const INITIAL: Snap = {
   ctxTokens: null,
   ctxWindow: null,
   compactPct: null,
+  startPct: null,
   limits: [],
   usd: null,
   trip: 0,
@@ -38,7 +39,7 @@ export const SKINS: Record<string, Skin> = {
 }
 
 /** The userConfig values; `register` copies the plugin's options over these defaults. */
-export const settings = { skin: 'night', warnAt: 20, badAt: 5, lamps: true, coldCacheBelow: 50 }
+export const settings = { skin: 'night', warnAt: 20, badAt: 5, lamps: true, coldCacheBelow: 50, heavyStartAt: 15 }
 const skin = (): Skin => SKINS[settings.skin] ?? (SKINS.night as Skin)
 const FONT = "'Segoe UI','Helvetica Neue',Arial,sans-serif"
 
@@ -214,7 +215,7 @@ const bar = (x: number, y: number, w: number, frac: number | null, tone: Tone, m
   return s
 }
 
-export type LampKey = 'failed' | 'cold' | 'tools' | 'agents'
+export type LampKey = 'failed' | 'cold' | 'heavy' | 'tools' | 'agents'
 export type Lamp = { key: LampKey; on: boolean; tone: Tone; count?: number; word: string }
 
 /** The four lamps: one state each, none for what a bar or a counter already shows. */
@@ -223,6 +224,7 @@ export const lamps = (snap: Snap, _now: number): Lamp[] => {
   return [
     { key: 'failed', on: snap.hasError, tone: 'bad', word: 'FAILED' },
     { key: 'cold', on: cache != null && cache < settings.coldCacheBelow, tone: 'warn', word: 'COLD' },
+    { key: 'heavy', on: snap.startPct != null && snap.startPct >= settings.heavyStartAt, tone: 'warn', count: snap.startPct ?? undefined, word: 'HEAVY' },
     { key: 'tools', on: snap.toolsRunning > 0, tone: 'ok', count: snap.toolsRunning, word: 'TOOLS' },
     { key: 'agents', on: snap.agents.length > 0, tone: 'ok', count: snap.agents.length, word: 'AGENTS' },
   ]
@@ -238,6 +240,8 @@ const GLYPHS: Record<LampKey, string> = {
     '<path d="M7 1.5 L13.25 12.5 H0.75 Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 6 V8" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="10.4" r="0.9" fill="COLOR"/>',
   cold:
     '<path d="M7 12.5 L7 1.5 M2.24 9.75 L11.76 4.25 M2.24 4.25 L11.76 9.75 M10.64 4.9 L10.64 3.7 M10.64 4.9 L11.68 5.5 M7 2.8 L5.96 2.2 M7 2.8 L8.04 2.2 M3.36 4.9 L2.32 5.5 M3.36 4.9 L3.36 3.7 M3.36 9.1 L3.36 10.3 M3.36 9.1 L2.32 8.5 M7 11.2 L8.04 11.8 M7 11.2 L5.96 11.8 M10.64 9.1 L11.68 8.5 M10.64 9.1 L10.64 10.3" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
+  heavy:
+    '<path d="M4.25 5.5 H9.75 L12 12.5 H2 Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.75 5.5 V4 A2.25 2.25 0 0 1 9.25 4 V5.5" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
   tools:
     '<path d="M8.32 3.84 A0.6 0.6 0 0 0 8.32 4.69 L9.31 5.68 A0.6 0.6 0 0 0 10.16 5.68 L12.24 3.6 A3.4 3.4 0 0 1 7.8 8.04 L3.66 12.18 A1.3 1.3 0 0 1 1.82 10.34 L5.96 6.2 A3.4 3.4 0 0 1 10.4 1.76 Z" fill="none" stroke="COLOR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
   agents:
@@ -404,7 +408,7 @@ export const buildSvg = (snap: Snap, now: number, working = false): string => {
 
 /** Width of the strip in viewBox units, and the lamps Svg's share of it: a Box of that width scales the lamps like the strip. */
 export const STRIP_W = 560
-export const LAMPS_W = 4 * LAMP_PITCH
+export const LAMPS_W = 5 * LAMP_PITCH
 // The image is STRIP_W minus one gap wide; the engine takes whole percentages only, so the scale is within 1%.
 export const LAMPS_SHARE = `${Math.round((LAMPS_W / (STRIP_W - 20)) * 100)}%`
 
@@ -441,7 +445,7 @@ const rangeReport = (snap: Snap, now: number): string => {
 export const buildReport = (snap: Snap, now: number): string => {
   const lines = [
     `model: ${snap.model || '(no turn yet)'}`,
-    `context: ${snap.ctxPct ?? '--'}% (${snap.ctxTokens ?? '--'} of ${snap.ctxWindow ?? '--'} tokens), compaction at ${snap.compactPct != null ? Math.round(snap.compactPct) + '%' : '--'}`,
+    `context: ${snap.ctxPct ?? '--'}% (${snap.ctxTokens ?? '--'} of ${snap.ctxWindow ?? '--'} tokens), compaction at ${snap.compactPct != null ? Math.round(snap.compactPct) + '%' : '--'}, started at ${snap.startPct ?? '--'}%`,
     ...snap.limits.map(l => `${l.kind}: used ${l.pct}%, left ${Math.round(leftOf(l))}%, resets in ${untilReset(l.resetsAt, now)} (${l.resetsAt ?? '--'})`),
     `tokens this session: ${snap.trip} (${millions(snap.trip)} M)`,
     `rate: ${Math.round(ratePerMin(snap.samples, now))} fresh tokens/min over the last 5 minutes, cache reads excluded (meter full scale ${VU_FULL})`,

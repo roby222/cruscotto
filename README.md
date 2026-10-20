@@ -37,6 +37,7 @@ colors itself from its compaction tick, drawn once the engine has reported it.
 |---|---|
 | Failed | the last turn ended in error (red) |
 | Cold | the cache hit of the last turn is under 50%, as after a compaction (amber) |
+| Heavy | the conversation started with 15% or more of the context already taken by instructions, skills and tools, with that share (amber) |
 | Tools | tool calls are running, with their count |
 | Agents | subagents are running, with their count |
 
@@ -76,7 +77,7 @@ give them the skin's greys, in VS Code's `settings.json`:
 From the ⚙ button, or in `/config`, also shown once at install. The ⚙
 panel lists only these rows and writes them where `/config` keeps them: a
 tick marks the current skin and On or Off, − and + move a threshold by 5
-between 0 and 100, and the file path is saved with Save. A change applies
+between 0 and 100, and the file path is applied with Use file. A change applies
 at once and the panel stays open until **Done**; a row your organization
 locks shows its value and no control.
 
@@ -87,6 +88,7 @@ locks shows its value and no control.
 | Red threshold | 5 | The same for red |
 | Lamps | on | Show the lamp row |
 | Cold cache lamp | 50 | Cache hit under which Cold lights |
+| Heavy start | 15 | Context share at the first reading from which Heavy lights |
 | Prompt buttons | on | Show the three built-in buttons |
 | Your buttons | none | Your Markdown file of buttons |
 
