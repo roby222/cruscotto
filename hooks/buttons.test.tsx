@@ -138,6 +138,17 @@ for (const surface of SURFACES) {
     expect(await ui.find(strip)).toBeDefined()
   })
 
+  test(`${surface}: rows named by the full plugin id are ours too`, async ($, on) => {
+    // With another plugin of the same name installed, the engine names the rows cruscotto@<marketplace>.<field>.
+    const seen = world(on, { rows: ROWS.map(r => r.key.startsWith('cruscotto.') ? { ...r, key: `cruscotto@cruscotto.${r.key.slice(10)}`, provider: { plugin: 'cruscotto@cruscotto' } } : r) })
+    const ui = await $.ui.mount({ plugin: 'cruscotto', surface, component: 'AbovePrompt', props: PROPS })
+    await ui.press({ key: 'settings' })
+    expect(await ui.find({ type: 'Text', text: /^Skin$/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /^Verbose$/ })).toBeUndefined()
+    await ui.press({ key: 'cruscotto@cruscotto.skin=amber' })
+    expect(seen.sets).toEqual([{ key: 'cruscotto@cruscotto.skin', value: 'amber' }])
+  })
+
   test(`${surface}: every settings control writes its row`, async ($, on) => {
     const seen = world(on)
     const ui = await $.ui.mount({ plugin: 'cruscotto', surface, component: 'AbovePrompt', props: PROPS })

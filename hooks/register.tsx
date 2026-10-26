@@ -17,7 +17,9 @@ const holdsEngine = (el: unknown): boolean => {
 const snapAtom = atom({ plugin: 'cruscotto', key: 'snap' } as const, INITIAL)
 // In $.state, not a module variable: every change of an option reloads the module, and the panel stays open.
 const panelAtom = atom({ plugin: 'cruscotto', key: 'panel' } as const, '' as '' | 'settings' | 'help')
-const PREFIX = 'cruscotto.'
+// A /config row of ours: `cruscotto.<field>` from `cruscotto`, or, when another plugin shares the name,
+// `cruscotto@<marketplace>.<field>` from `cruscotto@<marketplace>`.
+const ours = (name: string) => /^cruscotto([.@]|$)/.test(name)
 
 export const register: Register = (on, options) => {
   Object.assign(settings, options)
@@ -226,7 +228,7 @@ export const register: Register = (on, options) => {
     if (isOpen) {
       // The same rows /config holds for this plugin: the values stay in the engine's settings.
       const listed = await $.config.list().then(rows => ({ rows, error: '' }), err => ({ rows: [] as ConfigRow[], error: String(err) }))
-      const rows = listed.rows.filter(r => r.key.startsWith(PREFIX) || r.provider.plugin === 'cruscotto')
+      const rows = listed.rows.filter(r => ours(r.key) || ours(r.provider.plugin))
       const els = $.ui.resolve(e)
       const Input = 'Input' in els ? els.Input : undefined
       const set = async (key: string, value: ConfigValue) => {

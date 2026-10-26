@@ -3,6 +3,12 @@
 Each entry is a version users receive with `claude plugin update cruscotto`,
 newest first.
 
+## 0.1.12 (2026-10-26)
+
+- The settings panel finds its rows again when the engine names them by
+  the full plugin id, `cruscotto@cruscotto.<field>`, as it does when
+  another plugin shares the name.
+
 ## 0.1.11 (2026-10-26)
 
 - Range reasons on every quota window, the weekly ones included, and
