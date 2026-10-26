@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { ConfigRow, ConfigValue, Register } from 'claude-code'
+import type { ConfigRow, ConfigValue, EngineInterface, Register } from 'claude-code'
 
 import type { Snap } from '../types'
 import { ACTIONS, parseButtons } from './actions'
@@ -20,6 +20,12 @@ const panelAtom = atom({ plugin: 'cruscotto', key: 'panel' } as const, '' as '' 
 // A /config row of ours: `cruscotto.<field>` from `cruscotto`, or, when another plugin shares the name,
 // `cruscotto@<marketplace>.<field>` from `cruscotto@<marketplace>`.
 const ours = (name: string) => /^cruscotto([.@]|$)/.test(name)
+/** Our rows among /config's, and how many there were in all: the panel draws them, /cruscotto counts them. */
+const ownRows = ($: EngineInterface) =>
+  $.config.list().then(
+    all => ({ all, rows: all.filter(r => ours(r.key) || ours(r.provider.plugin)), error: '' }),
+    (err: unknown) => ({ all: [] as ConfigRow[], rows: [] as ConfigRow[], error: String(err) }),
+  )
 
 export const register: Register = (on, options) => {
   Object.assign(settings, options)
@@ -63,8 +69,11 @@ export const register: Register = (on, options) => {
 
   on('command.run', { command: 'cruscotto' }, async $ => {
     const snap = await read($, snapAtom)
+    // The settings line is what the smoke test reads: the real engine's /config rows through the panel's own filter.
+    const { all, rows, error } = await ownRows($)
+    const settingsLine = error ? `settings: config.list failed: ${error}` : `settings: ${rows.length} rows ours of ${all.length} in /config (${(rows.length ? rows : all).map(r => `${r.key} by ${r.provider.plugin}`).join(', ') || 'none'})`
 
-    return { text: buildReport(snap, await $.clock.now()) }
+    return { text: `${buildReport(snap, await $.clock.now())}\n${settingsLine}` }
   })
 
   on('prompt.submit', async ($, e, next) => {
@@ -227,8 +236,8 @@ export const register: Register = (on, options) => {
 
     if (isOpen) {
       // The same rows /config holds for this plugin: the values stay in the engine's settings.
-      const listed = await $.config.list().then(rows => ({ rows, error: '' }), err => ({ rows: [] as ConfigRow[], error: String(err) }))
-      const rows = listed.rows.filter(r => ours(r.key) || ours(r.provider.plugin))
+      const listed = await ownRows($)
+      const rows = listed.rows
       const els = $.ui.resolve(e)
       const Input = 'Input' in els ? els.Input : undefined
       const set = async (key: string, value: ConfigValue) => {
@@ -260,7 +269,7 @@ export const register: Register = (on, options) => {
       return (
         <Box flexDirection="column" gap={1}>
           {theirs}
-          {rows.length === 0 && <Text>{listed.error || `No cruscotto settings among ${listed.rows.length} /config rows: type /config`}</Text>}
+          {rows.length === 0 && <Text>{listed.error || `No cruscotto settings among ${listed.all.length} /config rows: type /config`}</Text>}
           {rows.map(r => (
             <Box key={r.key} flexDirection="row" alignItems="center" gap={1}>
               <Box width={e.surface === 'terminal' ? 22 : '28%'}><Text>{r.label}</Text></Box>

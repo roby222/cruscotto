@@ -3,6 +3,13 @@
 Each entry is a version users receive with `claude plugin update cruscotto`,
 newest first.
 
+## 0.1.13 (2026-10-26)
+
+- `/cruscotto` ends with a settings line: how many of `/config`'s rows the
+  panel takes as its own, by key and owner, or every row when none is,
+  so an empty panel can be explained. `scripts/smoke.sh` runs the command
+  against the real engine.
+
 ## 0.1.12 (2026-10-26)
 
 - The settings panel finds its rows again when the engine names them by

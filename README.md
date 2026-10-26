@@ -115,6 +115,7 @@ if you turn on auto-update for this marketplace under Marketplaces in
 claude --plugin-dir <this folder>
 claude plugin validate <this folder>
 claude plugin test <this folder>
+scripts/smoke.sh [claude binary]
 ```
 
 `hooks/register.tsx` is the hooks module, `hooks/dash.ts` the drawing and
@@ -128,3 +129,9 @@ and how it shares space with other mods, and `hooks/buttons.test.tsx`
 every button on the terminal, desktop and VS Code: the three prompts and
 their hotkeys, your own buttons from the file, the gear and each control
 of the settings panel.
+
+The tests stand in for the engine, so they cannot tell how the real one
+names things. `scripts/smoke.sh` runs `/cruscotto` in a headless session
+against the real engine and checks the report; its last line counts the
+plugin's rows in `/config` as the settings panel finds them, so when the
+panel comes up empty, `/cruscotto` says what the engine handed over.
