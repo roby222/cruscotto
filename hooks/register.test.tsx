@@ -187,14 +187,14 @@ test('disegna quando sotto c\'è solo una cornice o un mod che passa', { plugins
 test('mostra il disegno di un altro mod sopra la propria striscia', { plugins: [other] }, async ($, on) => {
   world(on)
 
-  let ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
+  const ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'vscode', component: 'AbovePrompt', props: PROPS })
   expect(await ui.find({ type: 'Text', text: /another mod/ })).toBeDefined()
   expect(String((await ui.find({ type: 'Svg' }) as unknown as { props: { source: string } }).props.source)).toContain('CONTEXT')
   await ui.unmount()
 
-  ui = await $.ui.mount({ plugin: 'cruscotto', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
-  expect(await ui.find({ type: 'Text', text: /another mod/ })).toBeDefined()
-  expect(await ui.find({ type: 'Text', text: /tok\/min/ })).toBeDefined()
+  const line = await $.ui.mount({ plugin: 'cruscotto', surface: 'terminal', component: 'AbovePrompt', props: PROPS })
+  expect(await line.find({ type: 'Text', text: /another mod/ })).toBeDefined()
+  expect(await line.find({ type: 'Text', text: /tok\/min/ })).toBeDefined()
 })
 
 // A mod that draws while it has something, then passes. Inline mods run sandboxed, with no reach into the

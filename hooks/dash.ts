@@ -15,7 +15,7 @@ export const INITIAL: Snap = {
   turns: [],
   live: 0,
   samples: [],
-  burn: [],
+  burns: {},
   cacheHit: null,
   lastSeconds: null,
   lastTools: 0,
@@ -43,7 +43,7 @@ export const SKINS: Record<string, Skin> = {
 export const HELP: [string, string][] = [
   ['Context', 'how full the context window is; the tick is where auto-compaction starts'],
   ['Session 5 h', 'share of the 5-hour quota left, and when it resets'],
-  ['Range', 'at the pace of the last 90 minutes, does the 5-hour quota last to its reset? spare share, or time to empty and the wait after'],
+  ['Range', 'at the pace of the last 90 minutes, does each quota last to its reset? the first to run out: time to empty and the wait after, else the spare share'],
   ['Weekly', 'share of the 7-day quota left, and when it resets'],
   ['Tokens / min', 'fresh tokens per minute over the last 5 minutes, cache reads excluded; full scale 60 k'],
   ['Last turns', 'one column per turn, the last eight; the outlined one is in progress'],
@@ -112,8 +112,8 @@ export const pushReading = (burn: Reading[], r: Reading): Reading[] =>
 
 export type Range =
   | { status: 'measuring' }
-  | { status: 'lasts'; spare: number }
-  | { status: 'runsOut'; msToEmpty: number; msToReset: number | null }
+  | { status: 'lasts'; spare: number; kind: string }
+  | { status: 'runsOut'; msToEmpty: number; msToReset: number | null; kind: string }
 
 /** The readings the range reasons on: the last 90 minutes, from the last reset if one fell inside them. */
 export const burnReadings = (burn: Reading[], now: number): Reading[] => {
@@ -140,24 +140,37 @@ export const burnPace = (live: Reading[]): number => {
   return paces.length === 0 ? 0 : paces.length % 2 ? (paces[mid] as number) : ((paces[mid - 1] as number) + (paces[mid] as number)) / 2
 }
 
-/** Autonomia della finestra 5 h: a questo ritmo, finisce prima del reset? */
-export const range = (snap: Snap, now: number): Range => {
-  const live = burnReadings(snap.burn, now)
+/** One window's range: at this pace, does it run out before its reset? */
+const rangeOf = (limit: Limit, burn: Reading[], now: number): Range => {
+  const live = burnReadings(burn, now)
   if (live.length < 2) return { status: 'measuring' }
   const first = live[0] as Reading
   const last = live[live.length - 1] as Reading
   if (last.t - first.t < BURN_MIN_SPAN_MS) return { status: 'measuring' }
   const slope = burnPace(live)
-  const five = snap.limits.find(l => l.kind === 'five_hour')
-  const msToReset = five?.resetsAt ? Date.parse(five.resetsAt) - now : null
+  const kind = limit.kind
+  const msToReset = limit.resetsAt ? Date.parse(limit.resetsAt) - now : null
   // spare: the share of the window still unused when the reset comes, at this pace.
-  if (slope <= 0) return { status: 'lasts', spare: Math.round(100 - last.pct) }
+  if (slope <= 0) return { status: 'lasts', spare: Math.round(100 - last.pct), kind }
   const msToEmpty = ((100 - last.pct) / slope)
   if (msToReset != null && msToEmpty >= msToReset) {
-    return { status: 'lasts', spare: Math.round(100 - last.pct - slope * msToReset) }
+    return { status: 'lasts', spare: Math.round(100 - last.pct - slope * msToReset), kind }
   }
-  return { status: 'runsOut', msToEmpty, msToReset }
+  return { status: 'runsOut', msToEmpty, msToReset, kind }
 }
+
+/** The range across every quota window: the first to run out, else the one with the least spare. A weekly
+ * window at 1% runs out long before a 5-hour one at 90% left, and that is the verdict that matters. */
+export const range = (snap: Snap, now: number): Range => {
+  const all = snap.limits.map(l => rangeOf(l, snap.burns?.[l.kind] ?? [], now))
+  const out = all.filter(r => r.status === 'runsOut').sort((a, b) => a.msToEmpty - b.msToEmpty)
+  if (out[0]) return out[0]
+  if (all.length === 0 || all.some(r => r.status === 'measuring')) return { status: 'measuring' }
+  return all.filter(r => r.status === 'lasts').sort((a, b) => a.spare - b.spare)[0] ?? { status: 'measuring' }
+}
+
+/** The window a verdict names, for a caption: nothing for the 5-hour one, the usual case, else its name. */
+const rangeName = (kind: string): string => (kind === 'five_hour' ? '' : limitLabel(kind).toLowerCase() + ' ')
 
 export const SOON_MS = 30 * 60 * 1000
 
@@ -205,7 +218,7 @@ export const lamp = (snap: Snap, now: number): { tone: Tone; reasons: string[] }
   }
   const r = range(snap, now)
   const rt = rangeTone(r)
-  if (rt !== 'ok') issues.push({ tone: rt, text: rt === 'bad' ? 'session 5 h runs out within 30 min' : 'session 5 h runs out well before reset' })
+  if (rt !== 'ok' && r.status === 'runsOut') issues.push({ tone: rt, text: `${limitLabel(r.kind).toLowerCase()} runs out ${rt === 'bad' ? 'within 30 min' : 'well before reset'}` })
   if (snap.hasError) issues.push({ tone: 'bad', text: 'last turn failed' })
 
   issues.sort((a, b) => RANK[b.tone] - RANK[a.tone])
@@ -350,11 +363,11 @@ export const buildSvg = (snap: Snap, now: number, working = false): string => {
   const rangeCell: Row = r.status === 'measuring'
     ? { name: 'Range', frac: null, tone: 'ok', value: 'n/a', caption: 'measuring, 15 min of use' }
     : r.status === 'lasts'
-      ? { name: 'Range', frac: null, tone: 'ok', value: `${r.spare}% spare`, caption: 'lasts to the reset' }
+      ? { name: 'Range', frac: null, tone: 'ok', value: `${r.spare}% spare`, caption: `${rangeName(r.kind)}lasts to the reset` }
       : {
         name: 'Range', frac: null, tone: rangeTone(r), value: spanText(r.msToEmpty),
         // The number is the time to empty; the caption says what that costs: the wait for the reset after it.
-        caption: r.msToReset != null ? `empty, then ${spanText(r.msToReset - r.msToEmpty)} wait` : 'runs out before reset',
+        caption: r.msToReset != null ? `${rangeName(r.kind)}empty, then ${spanText(r.msToReset - r.msToEmpty)} wait` : `${rangeName(r.kind)}runs out before reset`,
       }
   const limits: Row[] = snap.limits.map((l): Row => {
     const left = leftOf(l)
@@ -447,13 +460,16 @@ export const buildLine = (snap: Snap, now: number): string => {
 /** Le letture grezze, per confrontarle col pannello Usage. */
 /** The range's arithmetic, to check the verdict by hand: the readings it used, the pace, the projection. */
 const rangeReport = (snap: Snap, now: number): string => {
-  const live = burnReadings(snap.burn, now)
   const ago = (t: number) => `${Math.round((now - t) / 60000)} min ago`
-  const readings = live.map(x => `${x.pct}% used ${ago(x.t)}`).join(', ') || 'none'
-  const pace = live.length >= 2 ? (burnPace(live) * 60000).toFixed(2) : '--'
+  const lines = snap.limits.map(l => {
+    const live = burnReadings(snap.burns?.[l.kind] ?? [], now)
+    const readings = live.map(x => `${x.pct}% used ${ago(x.t)}`).join(', ') || 'none'
+    const pace = live.length >= 2 ? (burnPace(live) * 60000).toFixed(3) : '--'
+    return `range ${l.kind}: ${live.length} readings in the last 90 min (${readings}); median pace ${pace} points/min`
+  })
   const r = range(snap, now)
-  const verdict = r.status === 'measuring' ? 'measuring' : r.status === 'lasts' ? `lasts, ${r.spare}% spare` : `empty in ${untilReset(new Date(r.msToEmpty).toISOString(), 0)}`
-  return `range: ${live.length} readings of the 5 h window in the last 90 min (${readings}); median pace ${pace} points/min; ${verdict}`
+  const verdict = r.status === 'measuring' ? 'measuring' : r.status === 'lasts' ? `${r.kind} lasts, ${r.spare}% spare` : `${r.kind} empty in ${untilReset(new Date(r.msToEmpty).toISOString(), 0)}`
+  return [...lines, `range verdict: ${verdict}`].join('\n')
 }
 
 export const buildReport = (snap: Snap, now: number): string => {

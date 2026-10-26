@@ -3,6 +3,13 @@
 Each entry is a version users receive with `claude plugin update cruscotto`,
 newest first.
 
+## 0.1.11 (2026-10-26)
+
+- Range reasons on every quota window, the weekly ones included, and
+  reports the first to run out: a weekly window at 1% empties long before
+  a 5-hour one at 90% left, and the tile, the lamp and `/cruscotto` now
+  say so, naming the window.
+
 ## 0.1.10 (2026-10-21)
 
 - The band redraws every 2 seconds instead of 5: the spark steps more often

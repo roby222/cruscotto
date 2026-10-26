@@ -24,8 +24,8 @@ export type Snap = {
   /** Context growth of the turn in progress, the spectrum's live column; 0 between turns. */
   live: number
   samples: Sample[]
-  /** Le letture della finestra 5 h nell'ultima ora e mezza, per l'autonomia. */
-  burn: Reading[]
+  /** The readings of each quota window (by kind) in the last 90 minutes, for the range. */
+  burns: Record<string, Reading[]>
   cacheHit: number | null
   lastSeconds: number | null
   lastTools: number

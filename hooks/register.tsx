@@ -88,7 +88,6 @@ export const register: Register = (on, options) => {
 
   on('session.measure', async ($, e, next) => {
     const now = await $.clock.now()
-    const five = e.rateLimits.find(r => r.kind === 'five_hour')
     // The start reading belongs to the first exchange; later, with none on record, the lamp stays dark rather than guess.
     const opening = (await $.session.turns()) <= 1
 
@@ -105,7 +104,7 @@ export const register: Register = (on, options) => {
       ctxTokens: e.context.tokens ?? s.ctxTokens,
       ctxWindow: e.context.window,
       limits: e.rateLimits.map(r => ({ kind: r.kind, pct: r.percentUsed, resetsAt: r.resetsAt })),
-      burn: five ? pushReading(s.burn, { t: now, pct: five.percentUsed }) : s.burn,
+      burns: Object.fromEntries(e.rateLimits.map(r => [r.kind, pushReading(s.burns?.[r.kind] ?? [], { t: now, pct: r.percentUsed })])),
       usd: e.cost?.usd ?? s.usd,
       }
     })

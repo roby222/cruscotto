@@ -12,7 +12,8 @@ const snap = {
     { kind: 'five_hour', pct: 56, resetsAt: new Date(now + 2 * h + 18 * 60_000).toISOString() },
     { kind: 'seven_day', pct: 70, resetsAt: new Date(now + 3 * h + 38 * 60_000).toISOString() },
   ],
-  burn: [{ t: now - h, pct: 44 }, { t: now, pct: 56 }],
+  // both windows read for an hour: the 5 h one lasts with 16% spare, the weekly one barely moves
+  burns: { five_hour: [{ t: now - h, pct: 44 }, { t: now, pct: 56 }], seven_day: [{ t: now - h, pct: 69 }, { t: now, pct: 70 }] },
   // a few lamps lit, to show them: cold cache, two tools and one agent running
   cacheHit: 0.3, toolsRunning: 2, agents: ['a1'],
   usd: 12.4,

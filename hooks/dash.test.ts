@@ -59,20 +59,20 @@ describe('dash helpers', () => {
     const now = 10 * h
     const reset = new Date(now + 2 * h).toISOString()
     const limits = [{ kind: 'five_hour', pct: 70, resetsAt: reset }]
-    expect(range({ ...INITIAL, limits, burn: [{ t: now, pct: 70 }] }, now)).toEqual({ status: 'measuring' })
+    expect(range({ ...INITIAL, limits, burns: { five_hour: [{ t: now, pct: 70 }] } }, now)).toEqual({ status: 'measuring' })
     // 20 punti in un'ora: i 30 rimasti durano 1 h 30, il reset è tra 2 h.
     let burn = pushReading([], { t: now - h, pct: 50 })
     burn = pushReading(burn, { t: now, pct: 70 })
-    expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'runsOut', msToEmpty: 1.5 * h, msToReset: 2 * h })
-    expect(rangeTone({ status: 'runsOut', msToEmpty: 1.5 * h, msToReset: 2 * h })).toBe('warn')
+    expect(range({ ...INITIAL, limits, burns: { five_hour: burn } }, now)).toEqual({ status: 'runsOut', msToEmpty: 1.5 * h, msToReset: 2 * h, kind: 'five_hour' })
+    expect(rangeTone({ status: 'runsOut', msToEmpty: 1.5 * h, msToReset: 2 * h, kind: 'five_hour' })).toBe('warn')
     // Nove minuti prima del reset non sono un allarme; entro 30 minuti da adesso sì.
-    expect(rangeTone({ status: 'runsOut', msToEmpty: 117 * 60_000, msToReset: 126 * 60_000 })).toBe('ok')
-    expect(rangeTone({ status: 'runsOut', msToEmpty: 20 * 60_000, msToReset: 126 * 60_000 })).toBe('bad')
-    expect(rangeTone({ status: 'runsOut', msToEmpty: 20 * 60_000, msToReset: 25 * 60_000 })).toBe('ok') // empties 5 min before the refill: fine
+    expect(rangeTone({ status: 'runsOut', msToEmpty: 117 * 60_000, msToReset: 126 * 60_000, kind: 'five_hour' })).toBe('ok')
+    expect(rangeTone({ status: 'runsOut', msToEmpty: 20 * 60_000, msToReset: 126 * 60_000, kind: 'five_hour' })).toBe('bad')
+    expect(rangeTone({ status: 'runsOut', msToEmpty: 20 * 60_000, msToReset: 25 * 60_000, kind: 'five_hour' })).toBe('ok') // empties 5 min before the refill: fine
     // one odd reading, or a short burst, does not set the pace: the median of the pairwise paces does
     const steady = { ...INITIAL, limits: [{ kind: 'five_hour', pct: 64, resetsAt: new Date(now + 3 * h).toISOString() }],
-      burn: [0, 10, 20, 30, 40, 50, 60].map(m => ({ t: now - (60 - m) * 60_000, pct: 40 + m * 0.4 })) } // 0.4 points/min
-    const burst = { ...steady, burn: [...steady.burn.slice(0, -1), { t: now - 6 * 60_000, pct: 50 }, { t: now, pct: 64 }] }
+      burns: { five_hour: [0, 10, 20, 30, 40, 50, 60].map(m => ({ t: now - (60 - m) * 60_000, pct: 40 + m * 0.4 })) } } // 0.4 points/min
+    const burst = { ...steady, burns: { five_hour: [...(steady.burns.five_hour ?? []).slice(0, -1), { t: now - 6 * 60_000, pct: 50 }, { t: now, pct: 64 }] } }
     const calm = range(steady, now)
     const spiked = range(burst, now)
     expect(calm.status).toBe('runsOut')
@@ -80,18 +80,43 @@ describe('dash helpers', () => {
     if (calm.status === 'runsOut' && spiked.status === 'runsOut') expect(spiked.msToEmpty).toBeGreaterThan(calm.msToEmpty * 0.6)
     // a reset inside the 90 minutes restarts the pace from the drop
     const afterReset = { ...INITIAL, limits: [{ kind: 'five_hour', pct: 40, resetsAt: new Date(now + 4 * h).toISOString() }],
-      burn: [{ t: now - 80 * 60_000, pct: 80 }, { t: now - 70 * 60_000, pct: 10 }, { t: now, pct: 40 }] }
+      burns: { five_hour: [{ t: now - 80 * 60_000, pct: 80 }, { t: now - 70 * 60_000, pct: 10 }, { t: now, pct: 40 }] } }
     expect(range(afterReset, now).status).toBe('runsOut')
     // 5 punti in un'ora: al reset tra 2 h siamo all'80%, ne avanza il 20.
     burn = pushReading([], { t: now - h, pct: 65 })
     burn = pushReading(burn, { t: now, pct: 70 })
-    expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'lasts', spare: 20 })
-    expect(buildSvg({ ...INITIAL, limits, burn }, now).includes('20% spare')).toBe(true)
-    expect(lamp({ ...INITIAL, limits, burn }, now).tone).toBe('ok') // reaching the reset is fine, whatever is left
+    expect(range({ ...INITIAL, limits, burns: { five_hour: burn } }, now)).toEqual({ status: 'lasts', spare: 20, kind: 'five_hour' })
+    expect(buildSvg({ ...INITIAL, limits, burns: { five_hour: burn } }, now).includes('20% spare')).toBe(true)
+    expect(lamp({ ...INITIAL, limits, burns: { five_hour: burn } }, now).tone).toBe('ok') // reaching the reset is fine, whatever is left
     // Dopo un reset la quota scende: la lettura prima del reset non conta, si ricomincia a misurare.
     burn = pushReading([], { t: now - h, pct: 80 })
     burn = pushReading(burn, { t: now, pct: 10 })
-    expect(range({ ...INITIAL, limits, burn }, now)).toEqual({ status: 'measuring' })
+    expect(range({ ...INITIAL, limits, burns: { five_hour: burn } }, now)).toEqual({ status: 'measuring' })
+  })
+
+  test('range: la settimanale che finisce prima vince sulla 5 h che regge', () => {
+    const h = 3_600_000
+    const now = 10 * h
+    const limits = [
+      { kind: 'five_hour', pct: 10, resetsAt: new Date(now + 4 * h).toISOString() },
+      { kind: 'seven_day', pct: 99, resetsAt: new Date(now + 2 * 24 * h).toISOString() },
+    ]
+    // the 5 h window burns 5 points an hour, 90 left: it lasts; the weekly one burns 4 points an hour with 1 left: 15 min
+    const burns = {
+      five_hour: [{ t: now - h, pct: 5 }, { t: now, pct: 10 }],
+      seven_day: [{ t: now - h, pct: 95 }, { t: now, pct: 99 }],
+    }
+    const r = range({ ...INITIAL, limits, burns }, now)
+    expect(r.status).toBe('runsOut')
+    if (r.status === 'runsOut') {
+      expect(r.kind).toBe('seven_day')
+      expect(Math.round(r.msToEmpty)).toBe(0.25 * h)
+    }
+    expect(rangeTone(r)).toBe('bad')
+    expect(buildSvg({ ...INITIAL, limits, burns }, now).includes('weekly empty, then')).toBe(true)
+    expect(lamp({ ...INITIAL, limits, burns }, now).reasons).toContain('weekly runs out within 30 min')
+    // with the weekly window still measuring, no verdict is given on the 5 h alone
+    expect(range({ ...INITIAL, limits, burns: { five_hour: burns.five_hour } }, now)).toEqual({ status: 'measuring' })
   })
 
   test('la spia si accende per gradi', () => {
