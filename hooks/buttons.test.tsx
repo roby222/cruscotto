@@ -10,12 +10,17 @@ const PROPS = { hasSurvey: false, isWorking: false, maxRows: 20, bodyColumns: 12
 const SURFACES = ['terminal', 'desktop', 'vscode'] as const
 const FILE = '/notes/buttons.md'
 
-type Seen = { prompts: string[]; asUser: (boolean | undefined)[]; toasts: string[]; sets: { key: string; value: unknown }[] }
+type Seen = { prompts: string[]; asUser: (boolean | undefined)[]; toasts: string[]; sets: { key: string; value: unknown }[]; sends: string[] }
 
 type Answers = { rows?: unknown[]; drop?: string; deny?: string }
 
 const world = (on: On, { rows = ROWS, drop, deny }: Answers = {}) => {
-  const seen: Seen = { prompts: [], asUser: [], toasts: [], sets: [] }
+  const seen: Seen = { prompts: [], asUser: [], toasts: [], sets: [], sends: [] }
+  on('session.id', () => ({ value: 's1' }))
+  on('session.send', (_$, e) => {
+    seen.sends.push(e.text)
+    return { isDelivered: true }
+  })
   mock.clock(on, { now: 1_000_000 })
   on('store.get', () => ({ value: undefined }))
   on('ui.render', () => ({ type: 'engine', ref: 0 }))
@@ -71,6 +76,20 @@ for (const surface of SURFACES) {
     expect(ACTIONS.map(a => a.hotkey)).toEqual(['g', 'c', 'h'])
   })
 
+  test(`${surface}: mid-turn a prompt button messages this session instead of queueing a prompt`, async ($, on) => {
+    const seen = world(on)
+    on('turn.complete', (_$, e) => ({ text: e.answer }))
+    const ui = await $.ui.mount({ plugin: 'cruscotto', surface, component: 'AbovePrompt', props: PROPS })
+    await $.prompt.submit({ text: 'work on it' } as never) // the person's prompt: a turn is now running
+    await ui.press({ key: 'muoviti' })
+    expect(seen.sends).toEqual([ACTIONS.find(a => a.key === 'muoviti')?.text])
+    expect(seen.prompts).toEqual(['work on it'])
+    // the turn ends: the next press queues a prompt again
+    await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer', usage: { model: 'm', input_tokens: 1, output_tokens: 1, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } as never)
+    await ui.press({ key: 'muoviti' })
+    expect(seen.prompts).toEqual(['work on it', ACTIONS.find(a => a.key === 'muoviti')?.text])
+  })
+
   test(`${surface}: with Prompt buttons off only the gear is left`, { options: { buttons: false } }, async ($, on) => {
     world(on)
     const ui = await $.ui.mount({ plugin: 'cruscotto', surface, component: 'AbovePrompt', props: PROPS })
@@ -83,8 +102,12 @@ for (const surface of SURFACES) {
     const seen = world(on)
     let file = '## Review\nReview the last commit.\n\n## Tests\nRun the tests and tell me what failed.\n'
     on('fs.read', (_$, e) => (e.path === FILE ? { value: file } : { deny: 'no such file' }))
+    on('turn.complete', (_$, e) => ({ text: e.answer }))
+    // The person's prompt starts a turn, which ends before the buttons are pressed.
+    const done = () => $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer', usage: { model: 'm', input_tokens: 1, output_tokens: 1, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } as never)
 
     await $.prompt.submit({ text: 'first prompt', wait: false, origin: { kind: 'composer' } })
+    await done()
     let ui = await $.ui.mount({ plugin: 'cruscotto', surface, component: 'AbovePrompt', props: PROPS })
     expect(await label(ui, 'custom-1')).toBe('Review')
     expect((await ui.find({ key: 'custom-1' }))?.props.hotkey).toBe('1')
@@ -96,6 +119,7 @@ for (const surface of SURFACES) {
     // An edit to the file lands at the next prompt.
     file = '## Deploy\nDeploy to staging.\n'
     await $.prompt.submit({ text: 'second prompt', wait: false, origin: { kind: 'composer' } })
+    await done()
     ui = await $.ui.mount({ plugin: 'cruscotto', surface, component: 'AbovePrompt', props: PROPS })
     expect(await label(ui, 'custom-1')).toBe('Deploy')
     expect(await ui.find({ key: 'custom-2' })).toBeUndefined()

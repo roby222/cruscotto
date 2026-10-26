@@ -3,6 +3,12 @@
 Each entry is a version users receive with `claude plugin update cruscotto`,
 newest first.
 
+## 0.1.14 (2026-10-26)
+
+- A prompt button pressed while a turn runs reaches Claude inside that
+  turn, as a message to the session, instead of waiting in the queue until
+  the work is done. Idle, it is still a prompt of its own.
+
 ## 0.1.13 (2026-10-26)
 
 - `/cruscotto` ends with a settings line: how many of `/config`'s rows the

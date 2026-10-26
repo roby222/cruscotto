@@ -194,13 +194,25 @@ export const register: Register = (on, options) => {
         label={a.label}
         hotkey={a.hotkey || undefined}
         plain
-        // A hook that refuses the prompt answers { drop } and the call resolves: only a fault rejects.
-        onPress={() => void $.prompt.submit({ text: a.text, asUser: true }).then(
-          r => r.drop && $.ui.toast(`Prompt not sent: ${r.drop}`),
-          (err: unknown) => $.ui.toast(`Prompt not sent: ${err instanceof Error ? err.message : String(err)}`),
-        )}
+        onPress={() => void send(a.text)}
       />
     ))
+    // A plugin's prompt.submit waits for the session to go idle, so Hurry up pressed mid-turn would arrive after the
+    // work. While a turn runs the text goes as a message to this very session, which reaches the model inside the turn.
+    const send = async (text: string) => {
+      try {
+        if (turning) {
+          const r = await $.session.send({ to: { sessionId: await $.session.id() }, text })
+          if (r.isDelivered) return
+          $.ui.toast(`Not delivered mid-turn (${r.reason}); queued for after it`)
+        }
+        // A hook that refuses the prompt answers { drop } and the call resolves: only a fault rejects.
+        const r = await $.prompt.submit({ text, asUser: true })
+        if (r.drop) $.ui.toast(`Prompt not sent: ${r.drop}`)
+      } catch (err: unknown) {
+        $.ui.toast(`Prompt not sent: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    }
     const panel = await read($, panelAtom)
     // The question mark and the gear each open a panel in place of the strip: a line per item, or this plugin's
     // own rows of the engine's settings. Open, only that panel's Done remains.

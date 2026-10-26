@@ -54,8 +54,9 @@ drawing sits above the strip, both in view.
 - **?**: one line per tile, meter and lamp, in place of the strip and the buttons; **Done** closes it.
 - **⚙**: the cruscotto settings, the same way.
 
-When a hook refuses a button's prompt, a toast gives the reason instead of
-the prompt vanishing.
+Pressed while a turn runs, a button's text reaches Claude inside that turn,
+as a message to the session; pressed idle, it is a prompt of its own. When
+a hook refuses it, a toast gives the reason instead of the text vanishing.
 
 Hotkeys `g`, `c`, `h` with the strip focused. Your own buttons: point the
 **Your buttons** setting at a Markdown file where each `## Label` heading is
